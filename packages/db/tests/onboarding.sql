@@ -104,5 +104,40 @@ begin
 end $$;
 
 reset role;
+
+-- One creation per minute; simulate passage of time as a test administrator.
+set role authenticated;
+select set_config('request.jwt.claim.sub','44444444-4444-4444-8444-444444444444',true);
+do $
+begin
+  begin
+    perform public.create_restaurant('Too Soon','too-soon','Main Branch');
+    raise exception 'Rate limiting failed';
+  exception when check_violation then null;
+  end;
+end $;
+reset role;
+
+update public.audit_logs set created_at=now()-interval '5 minutes'
+  where actor_id='44444444-4444-4444-8444-444444444444';
+set role authenticated;
+select set_config('request.jwt.claim.sub','44444444-4444-4444-8444-444444444444',true);
+select public.create_restaurant('Second Restaurant','second-restaurant','Main Branch');
+reset role;
+
+update public.audit_logs set created_at=now()-interval '5 minutes'
+  where actor_id='44444444-4444-4444-8444-444444444444';
+set role authenticated;
+select set_config('request.jwt.claim.sub','44444444-4444-4444-8444-444444444444',true);
+select public.create_restaurant('Third Restaurant','third-restaurant','Main Branch');
+do $
+begin
+  begin
+    perform public.create_restaurant('Over Quota','over-quota','Main Branch');
+    raise exception 'Lifetime quota failed';
+  exception when check_violation then null;
+  end;
+end $;
+reset role;
 rollback;
 select 'Atomic onboarding smoke tests passed' as result;
