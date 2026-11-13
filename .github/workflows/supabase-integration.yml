@@ -39,6 +39,11 @@ jobs:
           sleep 1
           supabase migration new serveai_onboarding
           cp packages/db/migrations/0003_atomic_tenant_onboarding.sql "$(find supabase/migrations -maxdepth 1 -name '*_serveai_onboarding.sql' -print -quit)"
+          sleep 1
+          supabase migration new serveai_creation_quotas
+          cp packages/db/migrations/0004_tenant_creation_quotas.sql "$(find supabase/migrations -maxdepth 1 -name '*_serveai_creation_quotas.sql' -print -quit)"
+      - name: Configure disposable local signup for CI
+        run: sed -i 's/^enable_confirmations = true$/enable_confirmations = false/' supabase/config.toml
       - name: Start local Supabase and apply migrations
         run: supabase start
       - name: Ensure PostgreSQL client is available
@@ -52,6 +57,14 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f packages/db/tests/supabase_integration.sql
+      - name: Verify Auth HTTP login, real JWT authorization and PostgREST RLS
+        shell: bash
+        run: |
+          set -euo pipefail
+          status_env="$(supabase status -o env)"
+          anon_key="$(printf '%s\\n' "$status_env" | sed -n 's/^ANON_KEY=//p' | tr -d '"')"
+          if [ -z "$anon_key" ]; then echo 'Local anon key not available'; exit 1; fi
+          SUPABASE_ANON_KEY="$anon_key" node packages/db/tests/http_auth_integration.mjs
       - name: Shut down disposable Supabase services
         if: always()
         run: supabase stop --no-backup || true

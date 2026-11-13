@@ -47,6 +47,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f packages/db/migrations/0002_tenant_read_access.sql
       - name: Apply audited restaurant onboarding
         run: psql -v ON_ERROR_STOP=1 -f packages/db/migrations/0003_atomic_tenant_onboarding.sql
+      - name: Apply tenant creation quotas
+        run: psql -v ON_ERROR_STOP=1 -f packages/db/migrations/0004_tenant_creation_quotas.sql
       - name: Verify two-tenant isolation, grants, and foreign keys
         run: psql -v ON_ERROR_STOP=1 -f packages/db/tests/rls_isolation.sql
       - name: Verify atomic onboarding and prohibited callers

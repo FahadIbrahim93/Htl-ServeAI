@@ -8,12 +8,12 @@
 | Next.js guest experience | Static browser-only QR ordering/AI waiter UX simulation |
 | Pricing and order states | Client-side pricing calculator and pure transition functions; five unit tests |
 | Reproducible npm build | Lockfile committed; CI verifies `npm ci`, typecheck, unit tests and production build |
-| Tenant database schema | Nine RLS-enabled tables after three migration files |
+| Tenant database schema | Nine RLS-enabled tables after four migration files |
 | Authenticated tenant read isolation | SQL policies + restricted grants; two-tenant tests |
 | Restaurant onboarding | Restricted `create_restaurant` database RPC creates trial tenant, owner membership, first branch and audit event atomically |
-| Auth and RLS integration testing | PostgreSQL 17 mocks and disposable local Supabase Auth-schema/DB checks passed |
-| Next.js Supabase login/session integration | Not implemented |
-| Connected onboarding UI | Not implemented; DB RPC not called from web app |
+| Auth and RLS integration testing | PostgreSQL 17 mocks and disposable local Supabase Auth-schema/DB checks passed; HTTP JWT/PostgREST tests added |
+| Next.js Supabase login/session integration | SSR/browser SDK and login/logout pages implemented; full browser and session-lifecycle E2E unverified |
+| Connected onboarding UI | Validated form invokes the audited DB RPC with signed-in user; browser E2E unverified |
 | Staff invitation/role management API | Not implemented |
 | Server API for orders | Not implemented; no persisted guest orders |
 | Kitchen display / realtime / staff handoff | Simulated or not implemented |
@@ -27,12 +27,13 @@
 - [PR #9](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/9) — tenant-scoped read policies and PostgreSQL isolation tests
 - [PR #10](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/10) — audited atomic onboarding database function and denial tests
 - [PR #11](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/11) — green local Supabase database integration workflow
+- [PR #15](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/15) — owner login, dashboard, database creation quotas, and HTTP Auth tests (verify CI and merge status)
 
 ## Limitations and release gates
 
-- Local Supabase integration tests simulate JWT identities **inside Postgres**; they do not authenticate via HTTP or prove browser session security.
+- Local Supabase tests exercise both simulated SQL identities **and HTTP Auth/JWT/PostgREST**; they do not prove Next.js cookie/session security or browser E2E.
 - Database SQL is maintained in `packages/db/migrations/`; the test workflow generates temporary Supabase CLI migrations. A reviewed persistent migration/deployment strategy is still needed.
-- No tenant creation or order flow is wired from the Next.js guest/staff UI.
+- Owner tenant creation is wired to the dedicated onboarding UI; the QR guest-order flow remains a simulation without persistence.
 - Do not expose privileged Supabase keys or apply migrations to a hosted project without an approved staging plan.
 - Add rate limiting, staff permissions, migration review, HTTP/API tests, observability and incident recovery before launch.
 
