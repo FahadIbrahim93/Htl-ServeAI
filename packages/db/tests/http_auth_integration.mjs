@@ -71,6 +71,9 @@ assert(membersA.ok&&membersA.data.length===1&&membersA.data[0].role==='owner','O
 const retry=await createRestaurant(a,slugA);
 assert(!retry.ok,'Duplicate restaurant slug should be rejected');
 
+const throttled=await createRestaurant(a,`tenant-a-retry-${randomUUID().slice(0,8)}`);
+assert(!throttled.ok,'A second restaurant within 60 seconds must be blocked');
+
 const anonymousRead=await request('/rest/v1/tenants?select=id');
 assert(!anonymousRead.ok,'Anonymous Data API table read must be denied');
 
