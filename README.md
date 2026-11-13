@@ -2,9 +2,9 @@
 
 **Hope Theory Labs · Bangla-first restaurant SaaS**
 
-ServeAI is an in-development restaurant SaaS for Bangladesh. This repository includes a **browser-only guest-ordering prototype**, domain pricing/order-state functions, a multi-tenant PostgreSQL schema, tenant-scoped read policies, audited atomic restaurant onboarding RPC, documentation and automated CI.
+ServeAI is an in-development restaurant SaaS for Bangladesh. This repository includes a **browser-only guest-ordering prototype**, domain pricing/order-state functions, a multi-tenant PostgreSQL schema, tenant-scoped read policies, controlled restaurant onboarding, owner login/dashboard code, documentation and automated CI.
 
-> **Status: Pre-production foundation.** Restaurant onboarding has been implemented and tested **at the database level**; the Next.js application does not yet have a connected Supabase login/onboarding UI, order persistence, kitchen integration, a real AI waiter or payments. The demo does not submit real orders. Do not use for live restaurant operations.
+> **Status: Pre-production foundation.** The Next.js login, onboarding form, and tenant-scoped dashboard code has been added, but a full browser end-to-end test and deployment validation are still pending. Order persistence, kitchen integration, a real AI waiter, and payments are not implemented. The demo does not submit real orders. Do not use for live restaurant operations.
 
 ## Project navigation
 
@@ -30,18 +30,18 @@ Visit http://localhost:3000. The available application checks are `npm run typec
 
 ## Database validation
 
-The canonical SQL is currently in `packages/db/migrations/` (three sequential files). GitHub Actions runs:
+The canonical SQL is currently in `packages/db/migrations/` (four sequential files). GitHub Actions runs:
 
 1. **CI** — npm installation, TypeScript typecheck, Vitest unit tests, Next.js build.
 2. **Database RLS smoke tests** — temporary PostgreSQL 17 with simulated Supabase Auth roles.
-3. **Local Supabase integration** — disposable Docker-based Supabase stack, actual local Auth schema and SQL migrations, simulated JWT identities and authorization checks.
+3. **Local Supabase integration** — disposable Docker-based Supabase stack, actual local Auth schema and SQL migrations, simulated SQL identities and real HTTP sign-in/JWT/PostgREST authorization tests.
 
 See [database security](docs/DATABASE_SECURITY.md) for the permission matrix and boundaries. No hosted Supabase database has been modified for ServeAI, and the repo is not wired to a staging/production deployment.
 
 ## Next milestones
 
-1. Connect Next.js authentication and restaurant onboarding UI using the official Supabase SSR/client SDK, with a consistent dependency lockfile.
-2. Add production-ready branch/staff permissions, invitation controls, rate limiting and audit reviews.
+1. Complete browser E2E and staging verification for the new Next.js Supabase SSR login/onboarding dashboard.
+2. Add staff branch permissions, invitation controls, IP-level anti-abuse defenses and audit reviews (tenant creation already has account quotas).
 3. Implement server-side order validation, idempotent transactions, kitchen tickets and human handoff.
 4. Integrate a menu-grounded Bangla/English AI waiter with explicit guest confirmation.
 5. Configure staging, observability, backup recovery and release security gates.
