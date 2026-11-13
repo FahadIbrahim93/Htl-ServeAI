@@ -39,6 +39,9 @@ jobs:
           sleep 1
           supabase migration new serveai_onboarding
           cp packages/db/migrations/0003_atomic_tenant_onboarding.sql "$(find supabase/migrations -maxdepth 1 -name '*_serveai_onboarding.sql' -print -quit)"
+          sleep 1
+          supabase migration new serveai_creation_quotas
+          cp packages/db/migrations/0004_tenant_creation_quotas.sql "$(find supabase/migrations -maxdepth 1 -name '*_serveai_creation_quotas.sql' -print -quit)"
       - name: Configure disposable local signup for CI
         run: sed -i 's/^enable_confirmations = true$/enable_confirmations = false/' supabase/config.toml
       - name: Start local Supabase and apply migrations
