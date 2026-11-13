@@ -26,7 +26,8 @@
 - [PR #8](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/8) — guest UX prototype, starter schema, pinned dependencies and green CI
 - [PR #9](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/9) — tenant-scoped read policies and PostgreSQL isolation tests
 - [PR #10](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/10) — audited atomic onboarding database function and denial tests
-- [PR #11](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/11) — green local Supabase database integration workflow\n- [PR #15](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/15) — owner login, dashboard, database creation quotas, and HTTP Auth tests (verify CI and merge status)
+- [PR #11](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/11) — green local Supabase database integration workflow
+- [PR #15](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/15) — owner login, dashboard, database creation quotas, and HTTP Auth tests (verify CI and merge status)
 
 ## Limitations and release gates
 
