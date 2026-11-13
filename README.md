@@ -2,9 +2,9 @@
 
 **Hope Theory Labs · Bangla-first restaurant SaaS**
 
-ServeAI is an in-development multi-tenant restaurant operations platform for Bangladesh: QR ordering, bilingual menus, kitchen display, staff workflows, billing, and a menu-grounded AI waiter.
+ServeAI is an in-development restaurant SaaS for Bangladesh. The repository currently contains a **browser-only guest ordering UX prototype**, basic pricing/order-state functions, a starter multi-tenant SQL schema, documentation, and a CI configuration.
 
-> **Status: Pre-production.** Source documentation and implementation plans are available; the complete application has not been uploaded or verified yet. Do not use for live restaurant orders.
+> **Status: Prototype / pre-production.** There is no working tenant onboarding, Supabase-backed authentication, persistent order API, kitchen integration, real AI waiter, or payment processing. The demo does not submit real orders. Do not use for live restaurant operations.
 
 ## Project navigation
 
@@ -16,19 +16,30 @@ ServeAI is an in-development multi-tenant restaurant operations platform for Ban
 - [Roadmap](docs/ROADMAP.md)
 - [Security policy](SECURITY.md)
 
+## Run the prototype
+
+Requires Node.js 22 and npm. From the repository root:
+
+```bash
+npm ci
+npm run dev
+```
+
+Visit http://localhost:3000. Use `npm run typecheck`, `npm run test`, and `npm run build` for available checks. These are **not** integration tests of Supabase or order persistence.
+
 ## Technology direction
 
-Next.js App Router · TypeScript · Supabase PostgreSQL/Auth/RLS · Tailwind CSS · Gemini API · Vercel · GitHub Actions.
+Next.js App Router · TypeScript · Supabase PostgreSQL/Auth/RLS (planned integration) · Gemini API (planned) · Vercel (planned).
 
-## Engineering priorities
+## Next milestones
 
-1. Upload and validate the Phase 1 application, migration and test files.
-2. Establish reproducible builds with a committed lockfile.
-3. Verify multi-tenant isolation and restaurant onboarding.
-4. Implement QR ordering, kitchen and staff workflows.
-5. Add restricted AI waiter tools and explicit order confirmation.
+1. Obtain green GitHub Actions checks for the import/dependency branch.
+2. Execute and review the SQL migration in isolated local Supabase.
+3. Implement and test authentication, tenant onboarding, memberships and RLS policies.
+4. Implement authoritative server-side ordering and kitchen workflows.
+5. Integrate menu-grounded AI with explicit order confirmation and human handoff.
 
-All changes should be issue-driven and submitted through focused pull requests. Never commit credentials or real customer data.
+All changes should be issue-driven and submitted through reviewed pull requests. Never commit credentials or real customer data.
 
 ## Licensing
 
