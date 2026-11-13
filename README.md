@@ -50,7 +50,7 @@ See [database security](docs/DATABASE_SECURITY.md) for the permission matrix and
 4. Server-side order validation, idempotent transactions, kitchen tickets and human handoff.
 5. A menu-grounded Bangla/English AI waiter with explicit guest confirmation.
 
-Licensing and contribution terms are tracked in [#6](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/6).
+The licence decision (public, all rights reserved) is tracked in [#6](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/6) and proposed in [#18](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/18).
 
 All work must be issue-driven and reviewed through pull requests. Never commit credentials or real customer data.
 

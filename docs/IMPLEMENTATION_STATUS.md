@@ -21,7 +21,7 @@
 | AI waiter | Simulated static responses only |
 | Hosted Supabase staging and release migrations | Not configured (#5) |
 | Production deployment | Not deployed |
-| Licence | Not yet published (#6) |
+| Licence | Decided: public, all rights reserved. Proposed in PR #18 (#6) |
 
 ## Evidence
 
@@ -36,7 +36,7 @@
 - **#3** (tenant onboarding and RLS isolation) and **#13** (owner login and onboarding UI) were closed when the database work and #15 merged. Both were closed before every acceptance item was met. The outstanding browser, session-lifecycle and cross-tenant end-to-end checks now live in [#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17).
 - **#4** staff invitations: open. PR #16 covers the role policy only.
 - **#5** staging and release gates: open, not started.
-- **#6** licensing and contribution terms: open.
+- **#6** licensing and contribution terms: open. The decision is public, all rights reserved, with no outside contributions. It is proposed in PR #18, awaiting maintainer approval.
 
 ## Limitations and release gates
 
@@ -52,4 +52,4 @@
 1. [#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17): browser end-to-end tests for owner auth and onboarding
 2. [#4](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/4): staff invitations, building on the policy in PR #16
 3. [#5](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/5): staging and release gates, after maintainer approval
-4. [#6](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/6): licence decision
+4. [#6](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/6): merge the all-rights-reserved licence in PR #18

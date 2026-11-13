@@ -13,7 +13,8 @@ Target schedule for a focused small team. Estimates are not commitments.
 - [x] Owner sign-up, sign-in, onboarding form and dashboard in the web app (PR #15).
 - [ ] Browser end-to-end tests for owner auth and onboarding ([#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17)).
 - [ ] Staff invitations and role authorization ([#4](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/4)). The role policy is proposed in PR #16.
-- [ ] Independent security review, branch protection on `main`, and a decision on licence terms ([#6](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/6)).
+- [ ] Independent security review and branch protection on `main`.
+- [ ] Publish the all-rights-reserved licence ([#6](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/6), PR #18).
 - [ ] Staging environment and release gates ([#5](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/5)). Not started.
 
 Issues #3 and #13 were closed as their main pull requests merged. Their remaining end-to-end items are carried forward in #17.
