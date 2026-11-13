@@ -4,7 +4,8 @@ The canonical SQL currently consists of:
 
 - `packages/db/migrations/0001_core.sql` — core tables, foreign keys and deny-by-default RLS
 - `packages/db/migrations/0002_tenant_read_access.sql` — tenant-restricted staff reads and explicit grants
-- `packages/db/migrations/0003_atomic_tenant_onboarding.sql` — audited, authenticated tenant bootstrap RPC\n- `packages/db/migrations/0004_tenant_creation_quotas.sql` — per-account registration throttle and total creation cap
+- `packages/db/migrations/0003_atomic_tenant_onboarding.sql` — audited, authenticated tenant bootstrap RPC
+- `packages/db/migrations/0004_tenant_creation_quotas.sql` — per-account registration throttle and total creation cap
 
 ## Access matrix
 
