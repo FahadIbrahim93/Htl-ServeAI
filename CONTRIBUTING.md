@@ -1,6 +1,6 @@
 # Contributing to HTL ServeAI
 
-We welcome maintainable, tested changes from authorized collaborators and coding agents.
+This guide is for the HTL ServeAI maintainers and the coding agents they assign. The project is proprietary, and outside contributions are not accepted (see the end of this page).
 
 ## Before starting
 
@@ -38,6 +38,8 @@ Use Conventional Commits: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore
 
 At least one human maintainer should review security-sensitive changes; never self-approve an AI-generated change. CI must pass before merging. Prefer squash merges. Do not force-push main. Rollback procedures are required for high-risk changes.
 
-## External contributions and license
+## External contributions and licence
 
-Public visibility does not imply an open-source license. Maintainers must settle the project license and contribution terms before accepting external contributions.
+HTL ServeAI is all rights reserved. See [LICENSE](LICENSE). The repository is public for visibility only. We do not accept pull requests, patches or code from outside the project, and any we receive will be closed without review.
+
+If you find a security problem, report it privately as described in [SECURITY.md](SECURITY.md). For anything else, including permission requests, contact the repository owner through GitHub.
