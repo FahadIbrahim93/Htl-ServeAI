@@ -30,4 +30,24 @@
 6. Configure alerting, backup retention, support on-call and manual fallback.
 
 ## Status
-The included web application is an interactive local prototype and domain test harness, not an integrated production SaaS. Production APIs, RLS policies, queue workers, payment integrations, AI model and deployments remain implementation tasks.
+
+*Reviewed 14 November 2026. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for the detailed table.*
+
+M1 is partly done.
+
+**Merged and tested:**
+- Multi-tenant schema with row-level security on every exposed table
+- Tenant-scoped read policies
+- An audited, atomic `create_restaurant` function with per-account creation limits
+- Owner sign-up, sign-in, onboarding and a tenant-scoped dashboard in the web app (#15)
+
+Database and HTTP Auth tests run in CI against disposable PostgreSQL and local Supabase.
+
+**Not yet done in M1:**
+- Browser end-to-end tests for owner auth ([#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17))
+- Staff invitations and role authorization ([#4](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/4)). A role policy is proposed in PR #16
+- Branch and table management
+- The QR token lifecycle
+- Catalog and modifier management
+
+The guest experience is still a browser-only prototype. M2 onwards has not started: orders, kitchen, billing, the AI waiter, payments, staging and production. No hosted Supabase or Vercel environment exists yet ([#5](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/5)).
