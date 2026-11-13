@@ -1,40 +1,55 @@
 # Implementation Status
 
-**Reviewed 2026-11-14.** This table describes code merged into `main`, not proposed PR work.
+**Reviewed 14 November 2026.** This page describes what is merged into `main`. Open pull requests are listed separately and are not counted as delivered.
 
 | Capability | Current verified state |
 |---|---|
 | Product requirements, architecture, contributor instructions | Documented |
-| Next.js guest experience | Static browser-only QR ordering/AI waiter UX simulation |
-| Pricing and order states | Client-side pricing calculator and pure transition functions; five unit tests |
-| Reproducible npm build | Lockfile committed; CI verifies `npm ci`, typecheck, unit tests and production build |
-| Tenant database schema | Nine RLS-enabled tables after four migration files |
-| Authenticated tenant read isolation | SQL policies + restricted grants; two-tenant tests |
-| Restaurant onboarding | Restricted `create_restaurant` database RPC creates trial tenant, owner membership, first branch and audit event atomically |
-| Auth and RLS integration testing | PostgreSQL 17 mocks and disposable local Supabase Auth-schema/DB checks passed; HTTP JWT/PostgREST tests added |
-| Next.js Supabase login/session integration | SSR/browser SDK and login/logout pages implemented; full browser and session-lifecycle E2E unverified |
-| Connected onboarding UI | Validated form invokes the audited DB RPC with signed-in user; browser E2E unverified |
-| Staff invitation/role management API | Not implemented |
-| Server API for orders | Not implemented; no persisted guest orders |
-| Kitchen display / realtime / staff handoff | Simulated or not implemented |
+| Next.js guest experience | Browser-only QR ordering and AI waiter simulation. No real orders are created |
+| Pricing and order states | Client-side pricing calculator and pure state-transition functions, covered by unit tests |
+| Reproducible npm build | Lockfile committed. CI runs `npm ci`, typecheck, unit tests and a production build |
+| Tenant database schema | Nine RLS-enabled tables across four migration files |
+| Authenticated tenant read isolation | SQL policies and restricted grants, with two-tenant tests |
+| Restaurant onboarding (database) | Restricted `create_restaurant` RPC creates a trial tenant, owner membership, first branch and audit event in one transaction |
+| Restaurant creation limits | Enforced in the database: three restaurants per account, at most one successful creation per minute, per-user lock against parallel requests. No IP-level or bot protection yet |
+| Auth and RLS integration testing | PostgreSQL 17 checks with simulated identities, plus a disposable local Supabase stack with real HTTP sign-up, signed JWTs and PostgREST authorization |
+| Owner sign-up, sign-in and sign-out (web) | Merged in #15. Uses the official Supabase SSR client and checks the user with `getUser()` on the server. **Not yet tested in a real browser** (#17) |
+| Owner onboarding form and dashboard (web) | Merged in #15. Calls the audited RPC with the signed-in session and lists only the owner's restaurants. **Not yet tested in a real browser** (#17) |
+| Staff invitations and role management | Not implemented (#4). A role policy and unit tests are proposed in PR #16. That is a UI/design helper, not an authorization boundary |
+| Server API for orders | Not implemented. Guest orders are not persisted |
+| Kitchen display, realtime updates, staff handoff | Simulated or not implemented |
 | AI waiter | Simulated static responses only |
-| Hosted Supabase staging and release migrations | Not configured or tested |
+| Hosted Supabase staging and release migrations | Not configured (#5) |
 | Production deployment | Not deployed |
+| Licence | Not yet published (#6) |
 
 ## Evidence
 
-- [PR #8](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/8) — guest UX prototype, starter schema, pinned dependencies and green CI
-- [PR #9](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/9) — tenant-scoped read policies and PostgreSQL isolation tests
-- [PR #10](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/10) — audited atomic onboarding database function and denial tests
-- [PR #11](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/11) — green local Supabase database integration workflow
-- [PR #15](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/15) — owner login, dashboard, database creation quotas, and HTTP Auth tests (verify CI and merge status)
+- [PR #8](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/8): guest UX prototype, starter schema, pinned dependencies and CI
+- [PR #9](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/9): tenant-scoped read policies and PostgreSQL isolation tests
+- [PR #10](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/10): audited, atomic onboarding function and denial tests
+- [PR #11](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/11): disposable local Supabase integration workflow
+- [PR #15](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/15): owner login, onboarding, dashboard, creation quotas and HTTP Auth tests. Merged with all three checks green; no recorded code review at merge time
+
+## Issue tracking notes
+
+- **#3** (tenant onboarding and RLS isolation) and **#13** (owner login and onboarding UI) were closed when the database work and #15 merged. Both were closed before every acceptance item was met. The outstanding browser, session-lifecycle and cross-tenant end-to-end checks now live in [#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17).
+- **#4** staff invitations: open. PR #16 covers the role policy only.
+- **#5** staging and release gates: open, not started.
+- **#6** licensing and contribution terms: open.
 
 ## Limitations and release gates
 
-- Local Supabase tests exercise both simulated SQL identities **and HTTP Auth/JWT/PostgREST**; they do not prove Next.js cookie/session security or browser E2E.
-- Database SQL is maintained in `packages/db/migrations/`; the test workflow generates temporary Supabase CLI migrations. A reviewed persistent migration/deployment strategy is still needed.
-- Owner tenant creation is wired to the dedicated onboarding UI; the QR guest-order flow remains a simulation without persistence.
-- Do not expose privileged Supabase keys or apply migrations to a hosted project without an approved staging plan.
-- Add rate limiting, staff permissions, migration review, HTTP/API tests, observability and incident recovery before launch.
+- Local Supabase tests cover simulated SQL identities **and** HTTP Auth, JWT and PostgREST access. They do not prove browser cookie and session behaviour. That is #17.
+- Session-refresh middleware runs only on `/dashboard`, `/onboarding` and `/auth/callback`. This is deliberate, so the guest demo works without Supabase settings.
+- The login form currently shows Supabase Auth error text as returned. Friendlier messages are part of #17.
+- Canonical SQL lives in `packages/db/migrations/`. CI generates temporary Supabase CLI migrations from it. A reviewed, persistent migration and deployment process is still needed before any hosted database is used.
+- `main` has no branch protection yet, and merges so far have not had a recorded review.
+- Do not expose privileged Supabase keys, or apply migrations to a hosted project, without an approved staging plan.
 
-Continue [Issue #3](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/3) for Auth/browser onboarding and production authorization, then Issue #4 for staff invitations and Issue #5 for staging.
+## Next
+
+1. [#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17): browser end-to-end tests for owner auth and onboarding
+2. [#4](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/4): staff invitations, building on the policy in PR #16
+3. [#5](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/5): staging and release gates, after maintainer approval
+4. [#6](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/6): licence decision

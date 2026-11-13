@@ -42,7 +42,7 @@ Before staging, establish a canonical Supabase migrations directory and history,
 
 ## Next security tasks
 
-1. Complete browser end-to-end tests for SSR cookie refresh, sign-in, onboarding and dashboard access.
+1. Complete browser end-to-end tests for SSR cookie refresh, sign-in, onboarding and dashboard access ([#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17)).
 2. Expand tenant creation defenses beyond database per-user limits to IP/risk-based abuse controls.
 3. Implement authenticated staff invitations, revocation and branch-based roles.
 4. Add transaction-safe server order creation, idempotency, price snapshots and kitchen event delivery.
