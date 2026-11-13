@@ -2,9 +2,9 @@
 
 **Hope Theory Labs · Bangla-first restaurant SaaS**
 
-ServeAI is an in-development restaurant SaaS for Bangladesh. The repository currently contains a **browser-only guest ordering UX prototype**, basic pricing/order-state functions, a starter multi-tenant SQL schema, documentation, and a CI configuration.
+ServeAI is an in-development restaurant SaaS for Bangladesh. This repository includes a **browser-only guest-ordering prototype**, domain pricing/order-state functions, a multi-tenant PostgreSQL schema, tenant-scoped read policies, audited atomic restaurant onboarding RPC, documentation and automated CI.
 
-> **Status: Prototype / pre-production.** There is no working tenant onboarding, Supabase-backed authentication, persistent order API, kitchen integration, real AI waiter, or payment processing. The demo does not submit real orders. Do not use for live restaurant operations.
+> **Status: Pre-production foundation.** Restaurant onboarding has been implemented and tested **at the database level**; the Next.js application does not yet have a connected Supabase login/onboarding UI, order persistence, kitchen integration, a real AI waiter or payments. The demo does not submit real orders. Do not use for live restaurant operations.
 
 ## Project navigation
 
@@ -13,6 +13,7 @@ ServeAI is an in-development restaurant SaaS for Bangladesh. The repository curr
 - [Product requirements](docs/PRD.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Implementation status](docs/IMPLEMENTATION_STATUS.md)
+- [Database security model](docs/DATABASE_SECURITY.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Security policy](SECURITY.md)
 
@@ -25,21 +26,27 @@ npm ci
 npm run dev
 ```
 
-Visit http://localhost:3000. Use `npm run typecheck`, `npm run test`, and `npm run build` for available checks. These are **not** integration tests of Supabase or order persistence.
+Visit http://localhost:3000. The available application checks are `npm run typecheck`, `npm run test`, and `npm run build`. They do **not** verify real restaurant order placement.
 
-## Technology direction
+## Database validation
 
-Next.js App Router · TypeScript · Supabase PostgreSQL/Auth/RLS (planned integration) · Gemini API (planned) · Vercel (planned).
+The canonical SQL is currently in `packages/db/migrations/` (three sequential files). GitHub Actions runs:
+
+1. **CI** — npm installation, TypeScript typecheck, Vitest unit tests, Next.js build.
+2. **Database RLS smoke tests** — temporary PostgreSQL 17 with simulated Supabase Auth roles.
+3. **Local Supabase integration** — disposable Docker-based Supabase stack, actual local Auth schema and SQL migrations, simulated JWT identities and authorization checks.
+
+See [database security](docs/DATABASE_SECURITY.md) for the permission matrix and boundaries. No hosted Supabase database has been modified for ServeAI, and the repo is not wired to a staging/production deployment.
 
 ## Next milestones
 
-1. Obtain green GitHub Actions checks for the import/dependency branch.
-2. Execute and review the SQL migration in isolated local Supabase.
-3. Implement and test authentication, tenant onboarding, memberships and RLS policies.
-4. Implement authoritative server-side ordering and kitchen workflows.
-5. Integrate menu-grounded AI with explicit order confirmation and human handoff.
+1. Connect Next.js authentication and restaurant onboarding UI using the official Supabase SSR/client SDK, with a consistent dependency lockfile.
+2. Add production-ready branch/staff permissions, invitation controls, rate limiting and audit reviews.
+3. Implement server-side order validation, idempotent transactions, kitchen tickets and human handoff.
+4. Integrate a menu-grounded Bangla/English AI waiter with explicit guest confirmation.
+5. Configure staging, observability, backup recovery and release security gates.
 
-All changes should be issue-driven and submitted through reviewed pull requests. Never commit credentials or real customer data.
+All work must be issue-driven and reviewed through pull requests. Never commit credentials or real customer data.
 
 ## Licensing
 
