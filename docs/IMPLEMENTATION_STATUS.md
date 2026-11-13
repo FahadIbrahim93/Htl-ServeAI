@@ -1,30 +1,39 @@
 # Implementation Status
 
-**Reviewed 2026-11-14 against PR #7 and PR #8.** This document describes the PR #8 feature branch; the changes are not yet merged into `main`.
+**Reviewed 2026-11-14.** This table describes code merged into `main`, not proposed PR work.
 
-| Capability | Status |
+| Capability | Current verified state |
 |---|---|
-| Product requirements and architecture | Draft documentation |
-| Contribution and agent instructions | Present on `main` |
-| Next.js guest UX | Browser-only prototype with static menu and simulated AI responses |
-| Pricing | Pure client-side demo calculator; not authoritative |
-| Order status | Pure transition function; no persistence or kitchen integration |
-| Supabase migration | Starter SQL with 8 RLS-enabled tables and no client-facing RLS policies; not executed here |
-| Authentication and tenant onboarding | Not implemented in submitted code |
-| Staff invitations and authorization | Not implemented |
-| API order creation / idempotent transactions | Not implemented (schema includes an idempotency constraint) |
-| Dependency lockfile | Added in PR #8; needs successful CI validation |
-| Domain tests | Five small unit tests in submitted code; agent reports passing locally |
-| GitHub CI | PR #7 failed before tests due to missing lockfile; PR #8 CI success not verified |
-| QR table sessions / real kitchen display | Not implemented |
-| AI waiter / human handoff | Simulated UX only; no AI or staff backend |
+| Product requirements, architecture, contributor instructions | Documented |
+| Next.js guest experience | Static browser-only QR ordering/AI waiter UX simulation |
+| Pricing and order states | Client-side pricing calculator and pure transition functions; five unit tests |
+| Reproducible npm build | Lockfile committed; CI verifies `npm ci`, typecheck, unit tests and production build |
+| Tenant database schema | Nine RLS-enabled tables after three migration files |
+| Authenticated tenant read isolation | SQL policies + restricted grants; two-tenant tests |
+| Restaurant onboarding | Restricted `create_restaurant` database RPC creates trial tenant, owner membership, first branch and audit event atomically |
+| Auth and RLS integration testing | PostgreSQL 17 mocks and disposable local Supabase Auth-schema/DB checks passed |
+| Next.js Supabase login/session integration | Not implemented |
+| Connected onboarding UI | Not implemented; DB RPC not called from web app |
+| Staff invitation/role management API | Not implemented |
+| Server API for orders | Not implemented; no persisted guest orders |
+| Kitchen display / realtime / staff handoff | Simulated or not implemented |
+| AI waiter | Simulated static responses only |
+| Hosted Supabase staging and release migrations | Not configured or tested |
 | Production deployment | Not deployed |
 
-## Merge gates
+## Evidence
 
-- GitHub CI green on the actual proposed head SHA.
-- Review SQL RLS behavior in local Supabase before treating tenant access as implemented.
-- Review security-sensitive code changes and avoid describing the prototype as production-ready.
-- Document what was tested and what remains unverified.
+- [PR #8](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/8) — guest UX prototype, starter schema, pinned dependencies and green CI
+- [PR #9](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/9) — tenant-scoped read policies and PostgreSQL isolation tests
+- [PR #10](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/10) — audited atomic onboarding database function and denial tests
+- [PR #11](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/11) — green local Supabase database integration workflow
 
-See issues #3–#5 for next development work.
+## Limitations and release gates
+
+- Local Supabase integration tests simulate JWT identities **inside Postgres**; they do not authenticate via HTTP or prove browser session security.
+- Database SQL is maintained in `packages/db/migrations/`; the test workflow generates temporary Supabase CLI migrations. A reviewed persistent migration/deployment strategy is still needed.
+- No tenant creation or order flow is wired from the Next.js guest/staff UI.
+- Do not expose privileged Supabase keys or apply migrations to a hosted project without an approved staging plan.
+- Add rate limiting, staff permissions, migration review, HTTP/API tests, observability and incident recovery before launch.
+
+Continue [Issue #3](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/3) for Auth/browser onboarding and production authorization, then Issue #4 for staff invitations and Issue #5 for staging.
