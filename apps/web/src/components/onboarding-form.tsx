@@ -25,6 +25,7 @@ export function OnboardingForm(){
       });
       if(error){
         if(error.code==='23505')throw new Error('This restaurant URL slug is already in use.');
+        if(error.code==='23514')throw new Error('Restaurant creation limit reached. Please try later or contact support.');
         if(error.code==='28000')throw new Error('Please confirm your account and sign in again.');
         throw new Error('Could not create the restaurant. Please check your details and retry.');
       }
