@@ -1,0 +1,49 @@
+name: Database RLS smoke tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-rls-smoke:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: serveai_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d serveai_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: serveai_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure PostgreSQL client is available
+        run: |
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          psql --version
+      - name: Set up isolated mock auth roles
+        run: psql -v ON_ERROR_STOP=1 -f packages/db/tests/auth_stub.sql
+      - name: Apply core schema
+        run: psql -v ON_ERROR_STOP=1 -f packages/db/migrations/0001_core.sql
+      - name: Apply tenant read policies
+        run: psql -v ON_ERROR_STOP=1 -f packages/db/migrations/0002_tenant_read_access.sql
+      - name: Verify two-tenant isolation, grants, and foreign keys
+        run: psql -v ON_ERROR_STOP=1 -f packages/db/tests/rls_isolation.sql
