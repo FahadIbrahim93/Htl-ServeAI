@@ -1,0 +1,14 @@
+{
+  "name": "htl-serveai",
+  "private": true,
+  "packageManager": "npm@10.9.2",
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @serveai/web",
+    "build": "npm run build -w @serveai/web",
+    "test": "npm run test -w @serveai/web",
+    "typecheck": "npm run typecheck -w @serveai/web"
+  }
+}
