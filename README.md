@@ -48,6 +48,8 @@ See [database security](docs/DATABASE_SECURITY.md) for the permission matrix and
 
 All work must be issue-driven and reviewed through pull requests. Never commit credentials or real customer data.
 
-## Licensing
+## Licence
 
-Copyright © Hope Theory Labs. A public repository is **not** automatically open-source. No reuse license is granted until maintainers select and publish one.
+Copyright © 2026 Fahad Ibrahim / Hope Theory Labs. All rights reserved.
+
+This repository is public so the work can be seen. It is **not** open source. You may not use, copy, modify, distribute, sublicense or deploy any part of it without prior written permission. External contributions are not accepted. See [LICENSE](LICENSE).
