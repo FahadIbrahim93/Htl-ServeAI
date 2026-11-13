@@ -48,9 +48,9 @@ begin
   from pg_class c join pg_namespace s on s.oid=c.relnamespace
   where s.nspname='public' and c.relname in (
     'tenants','memberships','branches','dining_tables',
-    'menu_items','orders','order_items','outbox_events'
+    'menu_items','orders','order_items','outbox_events','audit_logs'
   ) and c.relrowsecurity;
-  if n <> 8 then raise exception 'RLS enabled on % of 8 tables', n; end if;
+  if n <> 9 then raise exception 'RLS enabled on % of 9 tables', n; end if;
 end $$;
 
 set role authenticated;
