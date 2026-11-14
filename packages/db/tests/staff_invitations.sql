@@ -20,9 +20,9 @@ begin
     raise exception 'Secret format is not 64 hex chars';
   end if;
   perform set_config('test.staff_invite_secret',v_inv->>'token',true);
-end $;
+end $$;
 -- Direct SELECT of token hashes must be denied to the authenticated role.
-do $
+do $$
 begin
   begin
     perform count(*) from public.staff_invitations;
