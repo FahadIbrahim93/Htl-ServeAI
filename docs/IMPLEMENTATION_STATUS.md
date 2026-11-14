@@ -43,8 +43,8 @@
 - Local Supabase tests cover simulated SQL identities **and** HTTP Auth, JWT and PostgREST access. They do not prove browser cookie and session behaviour. That is #17.
 - Session-refresh middleware runs only on `/dashboard`, `/onboarding` and `/auth/callback`. This is deliberate, so the guest demo works without Supabase settings.
 - The login form currently shows Supabase Auth error text as returned. Friendlier messages are part of #17.
-- Canonical SQL lives in `packages/db/migrations/`. CI generates temporary Supabase CLI migrations from it. A reviewed, persistent migration and deployment process is still needed before any hosted database is used.
-- `main` has no branch protection yet, and merges so far have not had a recorded review.
+- Canonical SQL lives in the Supabase CLI history in `supabase/migrations/`, and CI applies exactly those files. The deployment runbook is [DEPLOYMENT.md](DEPLOYMENT.md).
+- `main` is protected by a ruleset: changes need a pull request with green `verify` and `postgres-rls-smoke` checks, and force-pushes and deletion are blocked. No second reviewer is required while there is one maintainer.
 - Do not expose privileged Supabase keys, or apply migrations to a hosted project, without an approved staging plan.
 
 ## Next

@@ -1,4 +1,4 @@
--- Run under isolated PostgreSQL 17 after 0001_core.sql and 0002_tenant_read_access.sql.
+-- Run under isolated PostgreSQL 17 after the files in supabase/migrations/.
 -- Auth is stubbed by auth_stub.sql; this is not a full hosted Supabase integration test.
 -- psql -v ON_ERROR_STOP=1 --file=packages/db/tests/rls_isolation.sql
 begin;
