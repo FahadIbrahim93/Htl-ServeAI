@@ -70,11 +70,11 @@ begin
      v_email !~ '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$' then
     raise exception 'Invalid invitation email' using errcode='22023';
   end if;
-  if p_branch is not null and not exists (
-    select 1 from public.branches b
-    where b.id=p_branch and b.tenant_id=p_tenant
-  ) then
-    raise exception 'Invalid branch' using errcode='22023';
+  -- memberships are tenant-wide today. Never accept branch-targeted
+  -- invitations until branch-scoped membership enforcement is implemented.
+  if p_branch is not null then
+    raise exception 'Branch-scoped invitations not supported yet'
+      using errcode='22023';
   end if;
   -- Serialize invite issuance by actor to prevent concurrent throttle bypass.
   perform pg_catalog.pg_advisory_xact_lock(
