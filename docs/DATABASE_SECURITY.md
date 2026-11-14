@@ -2,10 +2,10 @@
 
 The canonical SQL currently consists of:
 
-- `packages/db/migrations/0001_core.sql` — core tables, foreign keys and deny-by-default RLS
-- `packages/db/migrations/0002_tenant_read_access.sql` — tenant-restricted staff reads and explicit grants
-- `packages/db/migrations/0003_atomic_tenant_onboarding.sql` — audited, authenticated tenant bootstrap RPC
-- `packages/db/migrations/0004_tenant_creation_quotas.sql` — per-account registration throttle and total creation cap
+- `supabase/migrations/20261115000001_core.sql` — core tables, foreign keys and deny-by-default RLS
+- `supabase/migrations/20261115000002_tenant_read_access.sql` — tenant-restricted staff reads and explicit grants
+- `supabase/migrations/20261115000003_atomic_tenant_onboarding.sql` — audited, authenticated tenant bootstrap RPC
+- `supabase/migrations/20261115000004_tenant_creation_quotas.sql` — per-account registration throttle and total creation cap
 
 ## Access matrix
 
@@ -36,9 +36,9 @@ The local Supabase workflow also exercises real HTTP password signup, signed JWT
 
 ## Migrations and deployment
 
-Do not apply the SQL directly to production. The repository's numbered `packages/db/migrations/` files are canonical, but are **not** automatically discovered by Supabase CLI. The CI workflow generates temporary Supabase migrations in the runner; it does not update any cloud project.
+`supabase/migrations/` is the single, canonical migration history. Both database workflows apply exactly these files in filename order, so CI tests what will be deployed. CI never touches a hosted project.
 
-Before staging, establish a canonical Supabase migrations directory and history, review existing grants and role behavior, run a disposable/staging migration dry run and `supabase test db`, and author an explicit rollback plan. Revoking broad client privileges may break unreviewed existing clients.
+Do not paste SQL into a hosted SQL editor. Add a new timestamped file with `supabase migration new <name>`, get it through a pull request with green checks, then apply it to staging with `supabase db push --dry-run` followed by `supabase db push`. Production follows the same reviewed files, with a fresh `pg_dump` backup first and Fahad's approval. Never edit a migration that has already been applied to a hosted project; write a new one instead. Rollback is restoring the backup and rolling the app back, not an in-place destructive down-migration. The full runbook is in [deployment](DEPLOYMENT.md).
 
 ## Next security tasks
 
@@ -46,4 +46,4 @@ Before staging, establish a canonical Supabase migrations directory and history,
 2. Expand tenant creation defenses beyond database per-user limits to IP/risk-based abuse controls.
 3. Implement authenticated staff invitations, revocation and branch-based roles.
 4. Add transaction-safe server order creation, idempotency, price snapshots and kitchen event delivery.
-5. Make CI checks mandatory through GitHub branch protection/rulesets before production.
+5. Require the `supabase-local` check in the `main` ruleset now that it always reports (`verify` and `postgres-rls-smoke` are already required).

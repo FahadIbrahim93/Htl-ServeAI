@@ -11,7 +11,7 @@
 Typecheck, lint, unit, migration validation, RLS tests, integration tests, Playwright smoke tests, dependency and secret scanning. Protected main branch; preview deployments; manual production approval.
 
 ## Environment separation
-Distinct Supabase projects and credentials for dev, staging and production. Versioned migrations, backups, restricted admin access, audited releases. No real customer data in test.
+Distinct Supabase projects and credentials for dev, staging and production. Versioned migrations, backups, restricted admin access, audited releases. No real customer data in test. Migrations live in `supabase/migrations/`; the setup and release runbook is [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Observability
 Track API latency/errors, order-confirmation success, outbox age, KDS lag, payment reconciliation failures, AI errors/tokens/cost, tenant-specific incident reports. Alert on persistent failures; do not log customer messages unnecessarily.
