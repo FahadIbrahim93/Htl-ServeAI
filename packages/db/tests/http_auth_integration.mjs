@@ -23,7 +23,7 @@ async function request(path,{method='GET',token,body}={}){
   return {status:response.status,ok:response.ok,data:parsed};
 }
 
-async function register(label){
+async function register(label,includeEmail=false){
   const email=`serveai-${label}-${randomUUID()}@test.invalid`;
   const password=`SecureLocalTest-${randomUUID()}!`;
   const signup=await request('/auth/v1/signup',{
@@ -39,7 +39,7 @@ async function register(label){
     token=login.data?.access_token;
   }
   assert(typeof token==='string'&&token.length>50,'A signed-in session JWT is required');
-  return token;
+  return includeEmail?{token,email}:token;
 }
 
 const a=await register('a');
@@ -85,5 +85,41 @@ assert(!internalOutbox.ok,'Outbox must not be readable to browser clients');
 
 const invalidJWT=await request('/rest/v1/tenants?select=id',{token:'invalid.jwt.signature'});
 assert(!invalidJWT.ok,'Invalid JWT must be rejected');
+
+// Invitation access control using real signed JWTs and PostgREST.
+const c=await register('staff',true);
+const invitation=await request('/rest/v1/rpc/create_staff_invitation',{
+  method:'POST',token:a,
+  body:{p_tenant:newA.data,p_email:c.email,p_role:'waiter',p_branch:null}
+});
+assert(invitation.ok,`Owner invitation failed HTTP ${invitation.status}: ${JSON.stringify(invitation.data)}`);
+assert(typeof invitation.data?.token==='string'&&invitation.data.token.length===64,
+  'Invite creator must receive one-time secret');
+const leaked=await request('/rest/v1/staff_invitations?select=token_sha256',{token:a});
+assert(!leaked.ok,'Invitation secrets must never be directly readable');
+const stolen=await request('/rest/v1/rpc/redeem_staff_invitation',{
+  method:'POST',token:b,body:{p_token:invitation.data.token}
+});
+assert(!stolen.ok,'Wrong confirmed email must not redeem bearer token');
+const redeemed=await request('/rest/v1/rpc/redeem_staff_invitation',{
+  method:'POST',token:c.token,body:{p_token:invitation.data.token}
+});
+assert(redeemed.ok&&redeemed.data===newA.data,
+  `Invitee redemption failed HTTP ${redeemed.status}`);
+const replay=await request('/rest/v1/rpc/redeem_staff_invitation',{
+  method:'POST',token:c.token,body:{p_token:invitation.data.token}
+});
+assert(!replay.ok,'Replaying one-time token must fail');
+const staffMembership=await request('/rest/v1/memberships?select=tenant_id,role',{token:c.token});
+assert(staffMembership.ok&&staffMembership.data.length===1&&
+  staffMembership.data[0].tenant_id===newA.data&&
+  staffMembership.data[0].role==='waiter','Invited staff must have tenant role');
+const escalate=await request('/rest/v1/rpc/create_staff_invitation',{
+  method:'POST',token:c.token,
+  body:{p_tenant:newA.data,p_email:'admin@test.invalid',p_role:'owner'}
+});
+assert(!escalate.ok,'Operational staff must not issue owner invitations');
+
+console.log('Supabase invitation JWT/PostgREST redemption and isolation checks passed');
 
 console.log('Supabase HTTP Auth/JWT/PostgREST tenant isolation checks passed');
