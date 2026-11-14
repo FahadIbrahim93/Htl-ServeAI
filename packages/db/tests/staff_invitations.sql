@@ -20,12 +20,15 @@ begin
     raise exception 'Secret format is not 64 hex chars';
   end if;
   perform set_config('test.staff_invite_secret',v_inv->>'token',true);
-  if (select count(*) from public.staff_invitations) <> 0 then
-    -- No direct table permission even for an authorized owner.
-    raise exception 'Invitation table unexpectedly readable';
-  end if;
-exception when insufficient_privilege then
-  null;
+end $;
+-- Direct SELECT of token hashes must be denied to the authenticated role.
+do $
+begin
+  begin
+    perform count(*) from public.staff_invitations;
+    raise exception 'Invitation token hashes unexpectedly readable';
+  exception when insufficient_privilege then null;
+  end;
 end $$;
 
 -- Manager/operational roles are not created by direct authenticated writes.
