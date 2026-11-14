@@ -49,6 +49,10 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f packages/db/migrations/0003_atomic_tenant_onboarding.sql
       - name: Apply tenant creation quotas
         run: psql -v ON_ERROR_STOP=1 -f packages/db/migrations/0004_tenant_creation_quotas.sql
+      - name: Apply staff invitations
+        run: psql -v ON_ERROR_STOP=1 -f packages/db/migrations/0005_staff_invitations.sql
+      - name: Verify staff invitation authorization and replay protection
+        run: psql -v ON_ERROR_STOP=1 -f packages/db/tests/staff_invitations.sql
       - name: Verify two-tenant isolation, grants, and foreign keys
         run: psql -v ON_ERROR_STOP=1 -f packages/db/tests/rls_isolation.sql
       - name: Verify atomic onboarding and prohibited callers
