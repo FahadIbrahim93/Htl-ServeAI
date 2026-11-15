@@ -1,6 +1,6 @@
 # ServeAI disposable browser E2E suite
 
-This is an **initial 10-scenario subset** of [Issue #17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17). The remaining scenarios include cross-tenant PostgREST proofs, account-cap behavior, duplicate slugs, multiple expiry-window refresh checks and cookie tampering. Do not claim the issue is complete until all 15 acceptance scenarios pass.
+This is an **initial 12-scenario subset** of [Issue #17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17). The remaining requirements include account-cap behavior after three creations, multiple JWT expiry-window refresh checks, cookie tampering, and complete callback error UX. The twelve scenarios include duplicate slugs and cross-tenant PostgREST access checked using a token read from the browser session. Do not claim the issue is complete until all 15 acceptance scenarios pass.
 
 The suite is **hard-gated** to `E2E_DISPOSABLE_ONLY=1` and local HTTP origins; no hosted Supabase project, real customers or production credentials may be used.
 
