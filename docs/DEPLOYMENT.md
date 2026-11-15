@@ -8,8 +8,9 @@ This is the runbook for hosting ServeAI. It covers environments, the Supabase mi
 | --- | --- |
 | Migration history | Done. `supabase/migrations/` is canonical and CI applies exactly those files. |
 | `main` protection | Done. Pull request plus green `verify` and `postgres-rls-smoke` checks; no force-push or deletion. |
-| Hosted Supabase (staging, production) | Not created. The Supabase account is at its free limit of two active projects. |
-| Vercel project | Not created. Waits for the Supabase projects so the owner pages have a database. |
+| Hosted Supabase staging | Done. `htl-serveai-staging` (ref `ipwdraxmmrlosbqgipda`, Singapore, Free plan), migrations `20261115000001`–`20261115000004` applied. |
+| Hosted Supabase production | Not created. The account is at its free limit of two active projects; production needs Fahad's approval. |
+| Vercel project | Done, staging only. `htl-serveai` (Hobby), linked to this repository; every environment points at staging. |
 
 ## Environments
 
@@ -61,6 +62,36 @@ After each push, check the Security Advisor in the Supabase dashboard (or `get_a
 - Never add a service-role or secret key to Vercel, and never give one a `NEXT_PUBLIC_` name.
 - Turn off "Auto-assign Custom Production Domains" so a merge does not go live by itself. Promote a checked deployment by hand; instant rollback is available.
 - Keep Vercel Authentication on for preview deployments.
+
+## Staging (test only)
+
+Live since 16 November 2026. There is no production database yet, so the Vercel project's Production, Preview and Development environments all use the staging Supabase URL and publishable key. Merging to `main` redeploys staging; that is expected and is not a production release.
+
+| Item | Value |
+| --- | --- |
+| Staging URL | https://htl-serveai-hopetheorybd-2156s-projects.vercel.app |
+| Vercel project | `htl-serveai` (`prj_H5QmuPulMdCcTAu8K7Xx7aohL4i6`), Root Directory `apps/web`, Node 22 |
+| Supabase project | `htl-serveai-staging` (`ipwdraxmmrlosbqgipda`) |
+| Access | Vercel Authentication on; sign in to the team's Vercel account to view |
+
+**Auth URL configuration for staging** (Supabase dashboard → Authentication → URL Configuration):
+
+- Site URL: `https://htl-serveai-hopetheorybd-2156s-projects.vercel.app`
+- Redirect URLs:
+  - `https://htl-serveai-hopetheorybd-2156s-projects.vercel.app/auth/callback`
+  - `https://htl-serveai-*-hopetheorybd-2156s-projects.vercel.app/auth/callback` (pull request previews)
+
+Until these are set, confirmation emails fall back to `http://localhost:3000`.
+
+**Smoke test after each staging deploy:**
+
+1. `/` returns 200 and shows the "UX prototype" label.
+2. `/login` renders the owner sign-in form.
+3. Signed out, `/dashboard` and `/onboarding` redirect to `/login`.
+4. An anonymous REST read of any `public` table with the publishable key is refused (`42501`), and so is an anonymous call to `rpc/create_restaurant`.
+5. A new sign-up shows "Check your email to confirm your account before signing in", and the confirmation link returns to the staging `/auth/callback`.
+
+When production is created, give it its own Supabase project and switch the Vercel Production environment variables to it, as in the table above.
 
 **Plan note.** Vercel Hobby is for personal and non-commercial use. Internal testing is fine; a restaurant pilot or any public, commercial use needs Vercel Pro ($20 per month). Supabase Pro (from $25 per month) adds daily backups and stops pausing.
 

@@ -4,7 +4,16 @@
 
 ServeAI is an in-development restaurant SaaS for Bangladesh. This repository includes a **browser-only guest-ordering prototype**, domain pricing/order-state functions, a multi-tenant PostgreSQL schema, tenant-scoped read policies, controlled restaurant onboarding, owner login/dashboard code, documentation and automated CI.
 
-> **Status: pre-production foundation (reviewed 14 November 2026).** Owner sign-up, sign-in, restaurant onboarding and a tenant-scoped dashboard were merged in [#15](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/15). They are covered by database and HTTP Auth tests, but **not yet by browser end-to-end tests** ([#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17)). Nothing is deployed. Staff invitations, order persistence, the kitchen display, a real AI waiter and payments are not implemented. The guest demo at `/` does not submit real orders. Do not use this for live restaurant operations.
+> **Status: pre-production foundation (reviewed 14 November 2026).** Owner sign-up, sign-in, restaurant onboarding and a tenant-scoped dashboard were merged in [#15](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/15). They are covered by database and HTTP Auth tests, but **not yet by browser end-to-end tests** ([#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17)). A password-protected staging site is up for internal testing only (see below); nothing is in production. Staff invitations, order persistence, the kitchen display, a real AI waiter and payments are not implemented. The guest demo at `/` does not submit real orders. Do not use this for live restaurant operations.
+
+## Staging (test only)
+
+- **URL:** https://htl-serveai-hopetheorybd-2156s-projects.vercel.app
+- **Access:** Vercel Authentication is on, so you must be signed in to the Hope Theory Labs Vercel account to open it.
+- **Database:** the separate `htl-serveai-staging` Supabase project. Use test data only, never real restaurant or customer details.
+- The guest demo at `/` is still simulated. Owner sign-up, sign-in, onboarding and the dashboard run against staging.
+
+Details and the smoke-test checklist are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#staging-test-only).
 
 ## Project navigation
 
