@@ -97,7 +97,7 @@ test('a second restaurant created immediately is limited per account',async({pag
   await registerRestaurant(page,'First Browser Restaurant',`first-${randomUUID().slice(0,8)}`);
   await expect(page).toHaveURL(/\/dashboard$/, {timeout:30_000});
   await registerRestaurant(page,'Second Browser Restaurant',`second-${randomUUID().slice(0,8)}`);
-  await expect(page.getByRole('alert')).toContainText('Restaurant creation limit reached');
+  await expect(page.locator('form [role="alert"]')).toContainText('Restaurant creation limit reached');
   await expect(page).toHaveURL(/\/onboarding$/);
 });
 
@@ -138,7 +138,7 @@ test('a duplicate restaurant slug is rejected across two browser accounts',async
     const other=await secondContext.newPage();
     await signupViaBrowser(other,identity());
     await registerRestaurant(other,'Different Restaurant',slug);
-    await expect(other.getByRole('alert')).toContainText('slug is already in use');
+    await expect(other.locator('form [role="alert"]')).toContainText('slug is already in use');
     await expect(other).toHaveURL(/\/onboarding$/);
   }finally{
     await secondContext.close();
