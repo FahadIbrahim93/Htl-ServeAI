@@ -13,9 +13,9 @@ async function browserSessionToken(context) {
   // Supabase SSR persists signed-in sessions in one or more sb-*-auth-token
   // browser cookies. Use the *browser's* session, not a separately minted JWT.
   const chunks=(await context.cookies()).filter(c=>
-    /-auth-token(?:\\.\\d+)?$/.test(c.name)
+    /-auth-token(?:\.\d+)?$/.test(c.name)
   ).sort((a,b)=>{
-    const index=name=>Number(name.match(/\\.(\\d+)$/)?.[1]??0);
+    const index=name=>Number(name.match(/\.(\d+)$/)?.[1]??0);
     return index(a.name)-index(b.name);
   });
   if(!chunks.length)throw new Error('Browser session cookie not found');
