@@ -1,0 +1,112 @@
+name: Browser E2E (disposable local Supabase)
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  browser-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CI: 'true'
+      E2E_DISPOSABLE_ONLY: '1'
+      E2E_BASE_URL: 'http://127.0.0.1:3000'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install pinned web dependencies
+        run: npm ci
+      - name: Resolve isolated pinned browser test dependencies (bootstrap)
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix tests/e2e --no-audit --no-fund --ignore-scripts
+          echo 'E2E_LOCKFILE_B64_BEGIN'
+          base64 -w0 tests/e2e/package-lock.json
+          echo
+          echo 'E2E_LOCKFILE_B64_END'
+      - name: Install Playwright Chromium and operating-system dependencies
+        run: |
+          cd tests/e2e
+          npx playwright install --with-deps chromium
+      - name: Set up local Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Configure disposable localhost Supabase
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('supabase/config.toml')
+          s=path.read_text()
+          for old,new in [(54321,55421),(54322,55422),(54323,55423),(54324,55424),(54320,55420)]:
+              a=f'port = {old}'
+              if a not in s:
+                  raise SystemExit(f'Missing config port {old}')
+              s=s.replace(a,f'port = {new}',1)
+          marker='[auth.email]'
+          i=s.index(marker)
+          j=s.index('enable_confirmations = true',i)
+          s=s[:j]+'enable_confirmations = false'+s[j+len('enable_confirmations = true'):]
+          path.write_text(s)
+          PY
+      - name: Start disposable Supabase and apply canonical migrations
+        run: supabase start
+      - name: Provide local-only public credentials to the web build
+        shell: bash
+        run: |
+          set -euo pipefail
+          env_output="$(supabase status -o env)"
+          local_url="$(printf '%s\n' "$env_output" | sed -n 's/^API_URL=//p' | tr -d '"')"
+          anon_key="$(printf '%s\n' "$env_output" | sed -n 's/^ANON_KEY=//p' | tr -d '"')"
+          if [ -z "$anon_key" ] || [ -z "$local_url" ]; then
+            echo 'Disposable local Supabase credentials were unavailable' >&2
+            exit 1
+          fi
+          case "$local_url" in
+            http://127.0.0.1:*|http://localhost:*) ;;
+            *) echo 'Refusing non-local Supabase URL' >&2; exit 1 ;;
+          esac
+          echo "::add-mask::$anon_key"
+          echo "NEXT_PUBLIC_SUPABASE_URL=$local_url" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$anon_key" >> "$GITHUB_ENV"
+      - name: Build Next.js app with local Supabase settings
+        run: npm run build
+      - name: Start Next.js app
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup npm run start > /tmp/serveai-next-e2e.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:3000/; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo 'Next.js app did not become ready' >&2
+          exit 1
+      - name: Exercise owner browser authentication and onboarding
+        run: npm run test:e2e --prefix tests/e2e
+      - name: Upload browser diagnostics on failure only
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: serveai-e2e-failure
+          path: |
+            tests/e2e/playwright-report/
+            tests/e2e/test-results/
+          if-no-files-found: ignore
+          retention-days: 2
+      - name: Stop disposable local Supabase
+        if: always()
+        run: supabase stop --no-backup || true
