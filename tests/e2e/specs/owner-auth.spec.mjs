@@ -10,6 +10,9 @@ function identity(){
 }
 
 async function signupViaBrowser(page,account){
+  const signUpResult=page.waitForResponse(response=>
+    response.url().includes('/auth/v1/signup') && response.request().method()==='POST'
+  );
   await page.goto('/login');
   await page.getByRole('button',{name:'Need an account? Sign up'}).click();
   await page.getByLabel('Email address').fill(account.email);
@@ -17,6 +20,10 @@ async function signupViaBrowser(page,account){
   await page.getByRole('button',{name:'Create account'}).click();
   await expect(page).toHaveURL(/\/dashboard$/, {timeout:30_000});
   await expect(page.getByText(account.email)).toBeVisible();
+  const response=await signUpResult;
+  const payload=await response.json();
+  // Store only in test memory; never log or persist disposable Auth tokens.
+  return payload.access_token;
 }
 
 async function signupViaLocalAuth(request,account){
@@ -103,6 +110,55 @@ test('signing out invalidates the browser session for protected routes',async({p
   await expect(page).toHaveURL(/\/login(?:\?|$)/);
   await page.goto('/dashboard');
   await expect(page).toHaveURL(/\/login(?:\?|$)/);
+});
+
+
+test('a duplicate restaurant slug is rejected across two browser accounts',async({page,browser})=>{
+  const slug=`duplicate-${randomUUID().slice(0,8)}`;
+  await signupViaBrowser(page,identity());
+  await registerRestaurant(page,'Original Restaurant',slug);
+  await expect(page).toHaveURL(/\/dashboard$/,{timeout:30_000});
+
+  const secondContext=await browser.newContext();
+  try{
+    const other=await secondContext.newPage();
+    await signupViaBrowser(other,identity());
+    await registerRestaurant(other,'Different Restaurant',slug);
+    await expect(other.getByRole('alert')).toContainText('slug is already in use');
+    await expect(other).toHaveURL(/\/onboarding$/);
+  }finally{
+    await secondContext.close();
+  }
+});
+
+test('different owners cannot view each others restaurant using browser JWTs',async({page,browser})=>{
+  const slug=`isolation-${randomUUID().slice(0,8)}`;
+  await signupViaBrowser(page,identity());
+  await registerRestaurant(page,'Restaurant Only For A',slug);
+  await expect(page).toHaveURL(/\/dashboard$/,{timeout:30_000});
+  await expect(page.getByText('Restaurant Only For A')).toBeVisible();
+
+  const contextB=await browser.newContext();
+  try{
+    const pageB=await contextB.newPage();
+    const browserTokenB=await signupViaBrowser(pageB,identity());
+    expect(typeof browserTokenB).toBe('string');
+    await expect(pageB.getByText('Restaurant Only For A')).not.toBeVisible();
+
+    const result=await pageB.evaluate(async({api,key,token,slug})=>{
+      const url=new URL('/rest/v1/tenants',api);
+      url.searchParams.set('select','id,slug');
+      url.searchParams.set('slug',`eq.${slug}`);
+      const response=await fetch(url.toString(),{
+        headers:{apikey:key,Authorization:`Bearer ${token}`}
+      });
+      return {ok:response.ok,records:await response.json()};
+    },{api,key:anonKey,token:browserTokenB,slug});
+    expect(result.ok,'Authenticated B must query PostgREST successfully').toBe(true);
+    expect(result.records,'B must not see tenant A rows').toEqual([]);
+  }finally{
+    await contextB.close();
+  }
 });
 
 test('session cookies use root path and SameSite protection',async({page,context})=>{
