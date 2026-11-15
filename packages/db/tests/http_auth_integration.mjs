@@ -88,6 +88,17 @@ assert(!invalidJWT.ok,'Invalid JWT must be rejected');
 
 // Invitation access control using real signed JWTs and PostgREST.
 const c=await register('staff',true);
+const crossTenantInvite=await request('/rest/v1/rpc/create_staff_invitation',{
+  method:'POST',token:b,
+  body:{p_tenant:newA.data,p_email:c.email,p_role:'manager',p_branch:null}
+});
+assert(!crossTenantInvite.ok,'Owner B must not invite staff into tenant A');
+const branchScopedInvite=await request('/rest/v1/rpc/create_staff_invitation',{
+  method:'POST',token:a,
+  body:{p_tenant:newA.data,p_email:c.email,p_role:'waiter',p_branch:randomUUID()}
+});
+assert(!branchScopedInvite.ok,'Branch-scoped invitations must be rejected pending branch ACLs');
+
 const invitation=await request('/rest/v1/rpc/create_staff_invitation',{
   method:'POST',token:a,
   body:{p_tenant:newA.data,p_email:c.email,p_role:'waiter',p_branch:null}
