@@ -9,10 +9,26 @@ function identity(){
   return {email:`serveai-e2e-${randomUUID()}@example.test`,password};
 }
 
+async function browserSessionToken(context) {
+  // Supabase SSR persists signed-in sessions in one or more sb-*-auth-token
+  // browser cookies. Use the *browser's* session, not a separately minted JWT.
+  const chunks=(await context.cookies()).filter(c=>
+    /-auth-token(?:\\.\\d+)?$/.test(c.name)
+  ).sort((a,b)=>{
+    const index=name=>Number(name.match(/\\.(\\d+)$/)?.[1]??0);
+    return index(a.name)-index(b.name);
+  });
+  if(!chunks.length)throw new Error('Browser session cookie not found');
+  const payload=chunks.map(c=>c.value).join('');
+  const decoded=payload.startsWith('base64-')
+    ? Buffer.from(payload.slice(7),'base64url').toString('utf8')
+    : payload;
+  const parsed=JSON.parse(decoded);
+  if(typeof parsed.access_token!=='string')throw new Error('Session JWT absent');
+  return parsed.access_token;
+}
+
 async function signupViaBrowser(page,account){
-  const signUpResult=page.waitForResponse(response=>
-    response.url().includes('/auth/v1/signup') && response.request().method()==='POST'
-  );
   await page.goto('/login');
   await page.getByRole('button',{name:'Need an account? Sign up'}).click();
   await page.getByLabel('Email address').fill(account.email);
@@ -20,10 +36,8 @@ async function signupViaBrowser(page,account){
   await page.getByRole('button',{name:'Create account'}).click();
   await expect(page).toHaveURL(/\/dashboard$/, {timeout:30_000});
   await expect(page.getByText(account.email)).toBeVisible();
-  const response=await signUpResult;
-  const payload=await response.json();
-  // Store only in test memory; never log or persist disposable Auth tokens.
-  return payload.access_token;
+  // Returns a JWT derived from the actual browser cookie, without logging it.
+  return browserSessionToken(page.context());
 }
 
 async function signupViaLocalAuth(request,account){
