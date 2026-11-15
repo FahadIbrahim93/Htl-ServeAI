@@ -62,6 +62,28 @@ jobs:
           s = s[:j] + 'enable_confirmations = false' + s[j + len('enable_confirmations = true'):]
           open(p, 'w').write(s)
           PY
+      - name: Choose an available database port for the disposable stack
+        if: steps.changes.outputs.db == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import socket
+          config = Path('supabase/config.toml')
+          value = config.read_text()
+          marker = 'port = 54322'
+          if value.count(marker) != 1:
+              raise SystemExit('Expected exactly one local database port setting')
+          with socket.socket() as sock:
+              sock.bind(('127.0.0.1', 0))
+              port = sock.getsockname()[1]
+          config.write_text(value.replace(marker, f'port = {port}', 1))
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as target:
+              target.write(f'LOCAL_DB_PORT={port}\n')
+          print('Selected free local database port; no hosted database is used')
+          PY
       - name: Start local Supabase and apply supabase/migrations
         if: steps.changes.outputs.db == 'true'
         run: supabase start
@@ -77,7 +99,7 @@ jobs:
         if: steps.changes.outputs.db == 'true'
         env:
           PGPASSWORD: postgres
-        run: psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f packages/db/tests/supabase_integration.sql
+        run: psql -h 127.0.0.1 -p "$LOCAL_DB_PORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f packages/db/tests/supabase_integration.sql
       - name: Verify Auth HTTP login, real JWT authorization and PostgREST RLS
         if: steps.changes.outputs.db == 'true'
         shell: bash

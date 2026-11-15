@@ -6,6 +6,7 @@ The canonical SQL currently consists of:
 - `supabase/migrations/20261115000002_tenant_read_access.sql` — tenant-restricted staff reads and explicit grants
 - `supabase/migrations/20261115000003_atomic_tenant_onboarding.sql` — audited, authenticated tenant bootstrap RPC
 - `supabase/migrations/20261115000004_tenant_creation_quotas.sql` — per-account registration throttle and total creation cap
+- `supabase/migrations/20261115000005_staff_invitations.sql` — proposed restricted staff invitation RPCs, immutable invitation scope and audit trail (PR #26; not merged)
 
 ## Access matrix
 
@@ -20,6 +21,7 @@ The canonical SQL currently consists of:
 | order_items | Own tenant | Denied | Denied |
 | outbox_events | Denied (internal) | Denied | Denied |
 | audit_logs | Own tenant if owner | Denied | Denied |
+| staff_invitations (proposed PR #26) | Denied (internal tokens) | Denied | Denied; restricted RPCs only |
 
 ## Bootstrap exception
 
@@ -30,7 +32,7 @@ The RPC now uses a transaction-scoped per-user advisory lock, one-successful-cre
 ## Automated test evidence
 
 - [Database RLS smoke workflow](https://github.com/FahadIbrahim93/Htl-ServeAI/actions/workflows/database-rls.yml): ephemeral PostgreSQL 17 with mock `auth.uid()`, two tenants, explicit privilege/row checks, cross-tenant foreign key denial, onboarding audit and forbidden callers
-- [Local Supabase integration workflow](https://github.com/FahadIbrahim93/Htl-ServeAI/actions/workflows/supabase-integration.yml): Docker-based Supabase CLI; generates temporary migrations from the canonical SQL and exercises the real local `auth.users` schema, `auth.uid()`, staff role, onboarding, and isolation
+- [Local Supabase integration workflow](https://github.com/FahadIbrahim93/Htl-ServeAI/actions/workflows/supabase-integration.yml): Docker-based Supabase CLI; applies the committed `supabase/migrations/` history and exercises the real local `auth.users` schema, `auth.uid()`, staff role, onboarding, and isolation
 
 The local Supabase workflow also exercises real HTTP password signup, signed JWTs, PostgREST RPC authorization and cross-tenant data access with temporary accounts. **What these tests do not establish:** browser SSR cookie/session security, production anti-abuse, end-to-end UI interactions, application order transactions, hosted staging migrations or production behavior.
 
@@ -44,6 +46,6 @@ Do not paste SQL into a hosted SQL editor. Add a new timestamped file with `supa
 
 1. Complete browser end-to-end tests for SSR cookie refresh, sign-in, onboarding and dashboard access ([#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17)).
 2. Expand tenant creation defenses beyond database per-user limits to IP/risk-based abuse controls.
-3. Implement authenticated staff invitations, revocation and branch-based roles.
+3. Review the staff invitation database RPCs in PR #26, implement trusted email delivery and end-to-end flows, then add branch-specific permissions. Direct token issuance to browsers must not be enabled.
 4. Add transaction-safe server order creation, idempotency, price snapshots and kitchen event delivery.
 5. Require the `supabase-local` check in the `main` ruleset now that it always reports (`verify` and `postgres-rls-smoke` are already required).

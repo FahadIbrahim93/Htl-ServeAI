@@ -52,6 +52,8 @@ jobs:
             echo "Applying $f"
             psql -v ON_ERROR_STOP=1 -f "$f"
           done
+      - name: Verify staff invitation authorization and one-time redemption
+        run: psql -v ON_ERROR_STOP=1 -f packages/db/tests/staff_invitations.sql
       - name: Verify two-tenant isolation, grants, and foreign keys
         run: psql -v ON_ERROR_STOP=1 -f packages/db/tests/rls_isolation.sql
       - name: Verify atomic onboarding and prohibited callers
