@@ -45,7 +45,7 @@ jobs:
         if: steps.changes.outputs.db == 'true'
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 3.2.0
       - name: Configure disposable local signup for CI
         if: steps.changes.outputs.db == 'true'
         shell: bash
