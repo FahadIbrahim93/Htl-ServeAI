@@ -40,6 +40,27 @@ The local Supabase workflow also exercises real HTTP password signup, signed JWT
 
 Do not paste SQL into a hosted SQL editor. Add a new timestamped file with `supabase migration new <name>`, get it through a pull request with green checks, then apply it to staging with `supabase db push --dry-run` followed by `supabase db push`. Production follows the same reviewed files, with a fresh `pg_dump` backup first and Fahad's approval. Never edit a migration that has already been applied to a hosted project; write a new one instead. Rollback is restoring the backup and rolling the app back, not an in-place destructive down-migration. The full runbook is in [deployment](DEPLOYMENT.md).
 
+## Browser session flags observed in disposable CI (PR #28)
+
+The Chromium E2E check on the draft branch observed two Supabase `sb-*`
+session-cookie chunks with these attributes on **localhost HTTP only**:
+
+| Attribute | Observed |
+|---|---|
+| `HttpOnly` | `false` |
+| `Secure` | `false` |
+| `SameSite` | `Lax` |
+| `Path` | `/` |
+
+These facts are **not** a claim that cookies in hosted HTTPS deployments
+will have the same flags, nor that session rotation or revocation is proven.
+Supabase browser-side cookies are JavaScript-readable in this configuration,
+so XSS protection and a reviewed Content Security Policy remain essential.
+CI prints cookie **flags only**, never cookie values or JWTs. This evidence
+comes from a proposed PR and is not a release approval. See
+[Issue #17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17)
+for pending expiry/refresh and tampered-session E2E requirements.
+
 ## Next security tasks
 
 1. Complete browser end-to-end tests for SSR cookie refresh, sign-in, onboarding and dashboard access ([#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17)).
