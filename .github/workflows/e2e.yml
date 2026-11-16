@@ -34,7 +34,7 @@ jobs:
       - name: Set up local Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 3.2.0
       - name: Configure disposable localhost Supabase
         shell: bash
         run: |
