@@ -1,6 +1,7 @@
 'use client';
 
-import {useState,type FormEvent} from 'react';
+import {useEffect,useState,type FormEvent} from 'react';
+import {authErrorMessage,callbackErrorMessage} from '@/lib/auth-errors';
 import {createClient} from '@/lib/supabase/browser';
 
 export function AuthForm(){
@@ -9,6 +10,10 @@ export function AuthForm(){
   const [mode,setMode]=useState<'signin'|'signup'>('signin');
   const [message,setMessage]=useState('');
   const [busy,setBusy]=useState(false);
+  useEffect(()=>{
+    const callbackMessage=callbackErrorMessage(new URLSearchParams(window.location.search).get('error'));
+    if(callbackMessage)setMessage(callbackMessage);
+  },[]);
   async function submit(event:FormEvent<HTMLFormElement>){
     event.preventDefault();
     if(busy)return;
@@ -29,7 +34,7 @@ export function AuthForm(){
         else setMessage('Check your email to confirm your account before signing in.');
       }
     }catch(error){
-      setMessage(error instanceof Error?error.message:'Authentication failed');
+      setMessage(authErrorMessage(error,mode));
     }finally{setBusy(false)}
   }
   return <form onSubmit={submit}>
