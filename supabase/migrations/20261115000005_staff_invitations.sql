@@ -172,8 +172,8 @@ begin
   if not found then raise exception 'Invitation not found' using errcode='42501'; end if;
   select role into v_actor_role from public.memberships
     where tenant_id=v_inv.tenant_id and user_id=v_actor;
-  if v_actor_role <> 'owner' and
-     not (v_actor_role='manager' and v_inv.role in ('waiter','kitchen','cashier')) then
+  if v_actor_role is null or (v_actor_role <> 'owner' and
+     not (v_actor_role='manager' and v_inv.role in ('waiter','kitchen','cashier'))) then
     raise exception 'Insufficient permission' using errcode='42501';
   end if;
   if v_inv.accepted_at is not null or v_inv.revoked_at is not null then

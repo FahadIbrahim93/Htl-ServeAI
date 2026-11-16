@@ -100,6 +100,22 @@ begin
   v_revoked := public.create_staff_invitation(
     v_tenant,'revoked@example.test','cashier');
   perform set_config('test.revoked_invite_secret',v_revoked->>'token',true);
+  -- Exercise denial for both an absent membership and an operational member.
+  perform set_config('request.jwt.claim.sub','ccccdddd-cccc-4ccc-8ccc-cccccccccccc',true);
+  begin
+    perform public.revoke_staff_invitation((v_revoked->>'invitation_id')::uuid);
+    raise exception 'Non-member revocation must be denied';
+  exception when insufficient_privilege then null;
+  end;
+  perform set_config('request.jwt.claim.sub','bbbbcccc-bbbb-4bbb-8bbb-bbbbbbbbbbbb',true);
+  begin
+    perform public.revoke_staff_invitation((v_revoked->>'invitation_id')::uuid);
+    raise exception 'Operational member revocation must be denied';
+  exception when insufficient_privilege then null;
+  end;
+  perform set_config('request.jwt.claim.sub','aaaabbbb-aaaa-4aaa-8aaa-aaaaaaaaaaaa',true);
+  -- Successful owner revocation below also proves denied calls left it active.
+
   if not public.revoke_staff_invitation((v_revoked->>'invitation_id')::uuid) then
     raise exception 'Owner could not revoke invitation';
   end if;
