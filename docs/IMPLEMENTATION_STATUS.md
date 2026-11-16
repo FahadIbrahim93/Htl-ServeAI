@@ -1,6 +1,6 @@
 # Implementation Status
 
-**Reviewed 14 November 2026.** This page describes what is merged into `main`. Open pull requests are listed separately and are not counted as delivered.
+**Reviewed 17 November 2026.** This page describes what is merged into `main`. Open pull requests are listed separately and are not counted as delivered.
 
 | Capability | Current verified state |
 |---|---|
@@ -13,15 +13,15 @@
 | Restaurant onboarding (database) | Restricted `create_restaurant` RPC creates a trial tenant, owner membership, first branch and audit event in one transaction |
 | Restaurant creation limits | Enforced in the database: three restaurants per account, at most one successful creation per minute, per-user lock against parallel requests. No IP-level or bot protection yet |
 | Auth and RLS integration testing | PostgreSQL 17 checks with simulated identities, plus a disposable local Supabase stack with real HTTP sign-up, signed JWTs and PostgREST authorization |
-| Owner sign-up, sign-in and sign-out (web) | Merged in #15. Uses the official Supabase SSR client and checks the user with `getUser()` on the server. **Not yet tested in a real browser** (#17) |
-| Owner onboarding form and dashboard (web) | Merged in #15. Calls the audited RPC with the signed-in session and lists only the owner's restaurants. **Not yet tested in a real browser** (#17) |
-| Staff invitations and role management | Not implemented (#4). A role policy and unit tests are proposed in PR #16. That is a UI/design helper, not an authorization boundary |
+| Owner sign-up, sign-in and sign-out (web) | Merged in #15. Uses the official Supabase SSR client and checks the user with `getUser()` on the server. Basic flows covered by the 12-test Chromium suite merged in #28; full session-lifecycle acceptance remains incomplete |
+| Owner onboarding form and dashboard (web) | Merged in #15. Calls the audited RPC with the signed-in session and lists only the owner's restaurants. Basic flows covered by the 12-test Chromium suite merged in #28; full session-lifecycle acceptance remains incomplete |
+| Staff invitations and role management | Invitation backend remains in draft PR #26 (#4). The role policy and unit tests merged in PR #16. That is a UI/design helper, not an authorization boundary |
 | Server API for orders | Not implemented. Guest orders are not persisted |
 | Kitchen display, realtime updates, staff handoff | Simulated or not implemented |
 | AI waiter | Simulated static responses only |
-| Hosted Supabase staging and release migrations | Not configured (#5) |
+| Hosted Supabase staging and release migrations | Protected staging is documented in #29; four canonical migrations applied there. Production is not configured (#5) |
 | Production deployment | Not deployed |
-| Licence | Decided: public, all rights reserved. Proposed in PR #18 (#6) |
+| Licence | Public, all rights reserved; merged in PR #18 (#6) |
 
 ## Evidence
 
@@ -31,25 +31,32 @@
 - [PR #11](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/11): disposable local Supabase integration workflow
 - [PR #15](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/15): owner login, onboarding, dashboard, creation quotas and HTTP Auth tests. Merged with all three checks green; no recorded code review at merge time
 
+- [PR #16](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/16): staff policy helper and tests
+- [PR #18](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/18): licence and contribution terms
+- [PR #27](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/27): controlled auth error messages
+- [PR #28](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/28): 12-test disposable Chromium suite
+- [PR #29](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/29): protected staging URL and runbook
+
 ## Issue tracking notes
 
-- **#3** (tenant onboarding and RLS isolation) and **#13** (owner login and onboarding UI) were closed when the database work and #15 merged. Both were closed before every acceptance item was met. The outstanding browser, session-lifecycle and cross-tenant end-to-end checks now live in [#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17).
-- **#4** staff invitations: open. PR #16 covers the role policy only.
-- **#5** staging and release gates: open, not started.
-- **#6** licensing and contribution terms: open. The decision is public, all rights reserved, with no outside contributions. It is proposed in PR #18, awaiting maintainer approval.
+- **#3** and **#13** closed after foundation implementation; their remaining browser acceptance criteria moved to **#17**.
+- **#17** closed when the initial suite merged, but its full acceptance criteria are not complete. [PR #32](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/32) (#31) strengthens failure/sign-out/tampered-session assertions. [PR #34](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/34) (#33), based on #32, adds account-cap and real expiry/refresh/revocation tests. Both remain in review and are not counted as merged coverage.
+- **#4** remains open. The role policy merged in #16; invitation database work is in draft [PR #26](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/26). Delivery, abuse controls and complete invitation UI/API verification remain required.
+- **#5** remains open. Protected staging exists; production, monitoring, backup-restore rehearsal and public launch gates remain pending.
+- **#6** is complete through merged #18. External contributions are not accepted.
 
 ## Limitations and release gates
 
-- Local Supabase tests cover simulated SQL identities **and** HTTP Auth, JWT and PostgREST access. They do not prove browser cookie and session behaviour. That is #17.
-- Session-refresh middleware runs only on `/dashboard`, `/onboarding` and `/auth/callback`. This is deliberate, so the guest demo works without Supabase settings.
-- The login form currently shows Supabase Auth error text as returned. Friendlier messages are part of #17.
-- Canonical SQL lives in the Supabase CLI history in `supabase/migrations/`, and CI applies exactly those files. The deployment runbook is [DEPLOYMENT.md](DEPLOYMENT.md).
-- `main` is protected by a ruleset: changes need a pull request with green `verify` and `postgres-rls-smoke` checks, and force-pushes and deletion are blocked. No second reviewer is required while there is one maintainer.
-- Do not expose privileged Supabase keys, or apply migrations to a hosted project, without an approved staging plan.
+- The merged 12-test browser suite covers basic owner flows, duplicate slugs, per-minute quota and cross-tenant PostgREST denial using a browser session. It does not establish the three-restaurant cap in the browser, repeated JWT expiry refresh, revoked-refresh-token denial or every callback/session assertion required by #17.
+- Session-refresh middleware runs only on `/dashboard`, `/onboarding` and `/auth/callback`. Explicit callback-refresh coverage and a separate build/runtime test without Supabase settings remain outstanding.
+- The login form maps provider errors to controlled messages and has a friendly callback error state, merged in #27.
+- Canonical SQL lives in `supabase/migrations/`; CI applies those files to disposable stacks. The deployment runbook is [DEPLOYMENT.md](DEPLOYMENT.md). Hosted staging setup is documented evidence, not proof of production readiness.
+- `main` protection is documented as requiring `verify` and `postgres-rls-smoke`; requiring `supabase-local` and browser checks remains a release task. No second reviewer is required while there is one maintainer.
+- Protected staging is for internal testing only. Public signup still requires complete browser acceptance, abuse controls and the release gates in the deployment runbook.
 
 ## Next
 
-1. [#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17): browser end-to-end tests for owner auth and onboarding
-2. [#4](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/4): staff invitations, building on the policy in PR #16
-3. [#5](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/5): staging and release gates, after maintainer approval
-4. [#6](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/6): merge the all-rights-reserved licence in PR #18
+1. Review #32 and #34 and finish the remaining #17 browser acceptance gaps.
+2. Review and complete staff invitations (#4 / #26), including trusted email delivery and abuse prevention.
+3. Complete operational release gates (#5); production requires explicit approval.
+4. Build catalog/modifiers, table management and revocable QR sessions, then transactional orders and durable kitchen delivery. Billing and the grounded AI waiter follow those foundations.

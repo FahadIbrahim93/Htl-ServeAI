@@ -31,7 +31,7 @@
 
 ## Status
 
-*Reviewed 14 November 2026. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for the detailed table.*
+*Reviewed 17 November 2026. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for the detailed table.*
 
 M1 is partly done.
 
@@ -44,10 +44,10 @@ M1 is partly done.
 Database and HTTP Auth tests run in CI against disposable PostgreSQL and local Supabase.
 
 **Not yet done in M1:**
-- Browser end-to-end tests for owner auth ([#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17))
-- Staff invitations and role authorization ([#4](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/4)). A role policy is proposed in PR #16
+- Complete browser end-to-end acceptance for owner auth; the initial 12-test suite merged in #28 ([#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17))
+- Staff invitations and role authorization ([#4](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/4)). The role policy merged in PR #16; the invitation backend is in draft PR #26
 - Branch and table management
 - The QR token lifecycle
 - Catalog and modifier management
 
-The guest experience is still a browser-only prototype. M2 onwards has not started: orders, kitchen, billing, the AI waiter, payments, staging and production. No hosted Supabase or Vercel environment exists yet ([#5](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/5)).
+The guest experience is still a browser-only prototype. M2 product workflows have not started: orders, kitchen, billing, the AI waiter and payments. Protected Vercel/Supabase staging exists for internal testing (see DEPLOYMENT.md); production and operational release gates remain pending ([#5](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/5)).
