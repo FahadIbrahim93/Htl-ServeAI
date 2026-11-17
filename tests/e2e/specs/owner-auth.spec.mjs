@@ -288,7 +288,7 @@ test('fourth restaurant is denied after three successful browser creations',asyn
   expect((await response.json()).length,'Exactly three persisted tenants').toBe(3);
 });
 
-test('server refresh preserves identity across two actual JWT expiry windows',async({page,browser})=>{
+test('callback and owner routes preserve identity across two actual JWT expiry windows',async({page,browser})=>{
   test.setTimeout(360_000);
   const account=identity();
   await signupViaBrowser(page,account);
@@ -301,6 +301,18 @@ test('server refresh preserves identity across two actual JWT expiry windows',as
     for(const route of ['/onboarding','/dashboard']){
       const before=await browserSessionToken(context);
       await waitForExpiry(before);
+      if(route==='/onboarding'){
+        // Exercise middleware refresh on a redirecting route. Without a code,
+        // callback fails closed, but must still persist refreshed session cookies.
+        await visitor.goto('/auth/callback');
+        await expect(visitor).toHaveURL(/\/login\?error=callback$/);
+        const callbackToken=await browserSessionToken(context);
+        expect(callbackToken!==before,'Callback redirect must persist rotated auth cookies').toBe(true);
+        expect(jwtClaims(callbackToken).exp>jwtClaims(before).exp,
+          'Callback must issue a later-expiring JWT').toBe(true);
+        expect(jwtClaims(callbackToken).sub===jwtClaims(before).sub,
+          'Callback refresh must preserve identity').toBe(true);
+      }
       await visitor.goto(route);
       await expect(visitor).toHaveURL(new RegExp(`${route}$`));
       const after=await browserSessionToken(context);
