@@ -4,7 +4,7 @@
 
 ServeAI is an in-development restaurant SaaS for Bangladesh. This repository includes a **browser-only guest-ordering prototype**, domain pricing/order-state functions, a multi-tenant PostgreSQL schema, tenant-scoped read policies, controlled restaurant onboarding, owner login/dashboard code, documentation and automated CI.
 
-> **Status: pre-production foundation (reviewed 14 November 2026).** Owner sign-up, sign-in, restaurant onboarding and a tenant-scoped dashboard were merged in [#15](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/15). They are covered by database and HTTP Auth tests, but **not yet by browser end-to-end tests** ([#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17)). A password-protected staging site is up for internal testing only (see below); nothing is in production. Staff invitations, order persistence, the kitchen display, a real AI waiter and payments are not implemented. The guest demo at `/` does not submit real orders. Do not use this for live restaurant operations.
+> **Status: pre-production foundation (reviewed 17 November 2026).** Owner sign-up, sign-in, restaurant onboarding and a tenant-scoped dashboard were merged in [#15](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/15). They have database/HTTP Auth tests and a 19-test disposable browser suite (#28, extended by merged #32, #34 and #40) plus a 2-test public smoke without Supabase settings (merged #38), but **full browser acceptance is not yet confirmed against all #17 scenarios** ([#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17)). A password-protected staging site is up for internal testing only (see below); nothing is in production. Staff invitations, order persistence, the kitchen display, a real AI waiter and payments are not implemented. The guest demo at `/` does not submit real orders. Do not use this for live restaurant operations.
 
 ## Staging (test only)
 
@@ -54,12 +54,12 @@ The canonical SQL is the Supabase CLI migration history in [`supabase/migrations
 2. **Database RLS smoke tests** — temporary PostgreSQL 17 with simulated Supabase Auth roles.
 3. **Local Supabase integration** — disposable Docker-based Supabase stack, actual local Auth schema and SQL migrations, simulated SQL identities and real HTTP sign-in/JWT/PostgREST authorization tests. It reports on every pull request; the full stack only starts when `supabase/`, `packages/db/` or the workflow change.
 
-See [database security](docs/DATABASE_SECURITY.md) for the permission matrix and boundaries. No hosted Supabase database has been modified for ServeAI yet. The staging and production setup is described in [deployment](docs/DEPLOYMENT.md).
+See [database security](docs/DATABASE_SECURITY.md) for the permission matrix and boundaries. The four canonical migrations are applied to the separate staging Supabase project; production is not configured. The staging and production setup is described in [deployment](docs/DEPLOYMENT.md).
 
 ## Next milestones
 
-1. Browser end-to-end tests for owner sign-up, sign-in, session refresh, sign-out, onboarding, quotas and cross-tenant denial, against local Supabase in CI ([#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17)).
-2. Staff invitations and role authorization ([#4](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/4)). The role policy merged in [#16](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/16); the invitation backend is in draft [#20](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/20).
+1. Confirm the remaining browser acceptance scenarios beyond the merged 19-test suite (follow-ups [#32](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/32) (`0f2e8d7`), [#34](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/34) (`c477b6e`), [#40](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/40) (`dc2b6f6`) and [#38](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/38) (`1139a78`) merged 18 November 2026), against local Supabase in CI ([#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17)).
+2. Staff invitations and role authorization ([#4](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/4)). The role policy merged in [#16](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/16); the invitation backend is in draft [#26](https://github.com/FahadIbrahim93/Htl-ServeAI/pull/26).
 3. Staging and production environments and release gates ([#5](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/5)). The migration history and deployment runbook are in place; see [deployment](docs/DEPLOYMENT.md).
 4. Server-side order validation, idempotent transactions, kitchen tickets and human handoff.
 5. A menu-grounded Bangla/English AI waiter with explicit guest confirmation.

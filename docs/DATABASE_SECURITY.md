@@ -30,9 +30,9 @@ The RPC now uses a transaction-scoped per-user advisory lock, one-successful-cre
 ## Automated test evidence
 
 - [Database RLS smoke workflow](https://github.com/FahadIbrahim93/Htl-ServeAI/actions/workflows/database-rls.yml): ephemeral PostgreSQL 17 with mock `auth.uid()`, two tenants, explicit privilege/row checks, cross-tenant foreign key denial, onboarding audit and forbidden callers
-- [Local Supabase integration workflow](https://github.com/FahadIbrahim93/Htl-ServeAI/actions/workflows/supabase-integration.yml): Docker-based Supabase CLI; generates temporary migrations from the canonical SQL and exercises the real local `auth.users` schema, `auth.uid()`, staff role, onboarding, and isolation
+- [Local Supabase integration workflow](https://github.com/FahadIbrahim93/Htl-ServeAI/actions/workflows/supabase-integration.yml): Docker-based Supabase CLI; applies the canonical migration files and exercises the real local `auth.users` schema, `auth.uid()`, staff role, onboarding, and isolation
 
-The local Supabase workflow also exercises real HTTP password signup, signed JWTs, PostgREST RPC authorization and cross-tenant data access with temporary accounts. **What these tests do not establish:** browser SSR cookie/session security, production anti-abuse, end-to-end UI interactions, application order transactions, hosted staging migrations or production behavior.
+The local Supabase workflow also exercises real HTTP password signup, signed JWTs, PostgREST RPC authorization and cross-tenant data access with temporary accounts. **What these tests do not establish:** complete browser SSR cookie/session security, production anti-abuse, application order transactions or production behavior. The separate browser workflow merged in #28 adds 12 UI scenarios; session lifecycle acceptance is still incomplete. Staging migrations are documented separately in DEPLOYMENT.md.
 
 ## Migrations and deployment
 
@@ -42,7 +42,7 @@ Do not paste SQL into a hosted SQL editor. Add a new timestamped file with `supa
 
 ## Browser session flags observed in disposable CI (PR #28)
 
-The Chromium E2E check on the draft branch observed two Supabase `sb-*`
+The Chromium E2E check merged in #28 observed two Supabase `sb-*`
 session-cookie chunks with these attributes on **localhost HTTP only**:
 
 | Attribute | Observed |
@@ -57,9 +57,9 @@ will have the same flags, nor that session rotation or revocation is proven.
 Supabase browser-side cookies are JavaScript-readable in this configuration,
 so XSS protection and a reviewed Content Security Policy remain essential.
 CI prints cookie **flags only**, never cookie values or JWTs. This evidence
-comes from a proposed PR and is not a release approval. See
+comes from the merged browser suite and is not a release approval. See
 [Issue #17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17)
-for pending expiry/refresh and tampered-session E2E requirements.
+for the acceptance contract; follow-ups #31/#32 (`0f2e8d7`), #33/#34 (`c477b6e`) and #39/#40 (`dc2b6f6`) added the session checks and merged on 18 November 2026. Issue closure does not establish full coverage.
 
 ## Next security tasks
 
