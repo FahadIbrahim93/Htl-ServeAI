@@ -25,7 +25,9 @@ export default defineConfig({
     : [['list']],
   use:{
     baseURL:origin,
-    trace:'retain-on-failure',
+    // Auth traces include request bodies, Authorization headers and cookie values.
+    // Keep screenshots and HTML diagnostics, but never record those secrets.
+    trace:'off',
     screenshot:'only-on-failure',
     actionTimeout:20_000,
   },
