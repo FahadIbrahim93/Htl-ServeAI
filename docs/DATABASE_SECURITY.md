@@ -57,9 +57,9 @@ will have the same flags, nor that session rotation or revocation is proven.
 Supabase browser-side cookies are JavaScript-readable in this configuration,
 so XSS protection and a reviewed Content Security Policy remain essential.
 CI prints cookie **flags only**, never cookie values or JWTs. This evidence
-comes from the initial merged browser suite and is not a release approval. See
+comes from the merged browser suite and is not a release approval. See
 [Issue #17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17)
-for the acceptance contract; follow-ups #31/#32 and #33/#34 cover pending session checks in review. Issue closure does not establish full coverage.
+for the acceptance contract; follow-ups #31/#32 (`0f2e8d7`), #33/#34 (`c477b6e`) and #39/#40 (`dc2b6f6`) added the session checks and merged on 18 November 2026. Issue closure does not establish full coverage.
 
 ## Next security tasks
 

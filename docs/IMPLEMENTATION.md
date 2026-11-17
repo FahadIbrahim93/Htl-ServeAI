@@ -44,7 +44,7 @@ M1 is partly done.
 Database and HTTP Auth tests run in CI against disposable PostgreSQL and local Supabase.
 
 **Not yet done in M1:**
-- Complete browser end-to-end acceptance for owner auth; the initial 12-test suite merged in #28 ([#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17))
+- Complete browser end-to-end acceptance for owner auth; the initial suite merged in #28 and was extended to 19 tests by #32, #34 and #40, with a public smoke in #38 ([#17](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/17))
 - Staff invitations and role authorization ([#4](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/4)). The role policy merged in PR #16; the invitation backend is in draft PR #26
 - Branch and table management
 - The QR token lifecycle
