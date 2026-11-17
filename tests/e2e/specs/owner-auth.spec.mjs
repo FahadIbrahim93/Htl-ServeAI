@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {randomUUID} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 
 const api=process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -101,30 +102,63 @@ test('a second restaurant created immediately is limited per account',async({pag
   await expect(page).toHaveURL(/\/onboarding$/);
 });
 
-test('unauthorized login does not establish an owner session',async({page})=>{
+for (const knownAccount of [false,true]) {
+test(`rejected credentials show safe feedback for ${knownAccount?'existing':'unknown'} accounts`,async({page,request})=>{
   const account=identity();
+  if(knownAccount)await signupViaLocalAuth(request,account);
   await page.goto('/login');
   await page.getByLabel('Email address').fill(account.email);
   await page.getByLabel('Password').fill('DefinitelyWrongPassword!'); 
   await page.getByRole('button',{name:'Sign in',exact:true}).click();
-  await expect(page.getByRole('status')).toBeVisible();
+  await expect(page.locator('form [role="status"]')).toHaveText('Email or password is incorrect. Please try again.');
   await expect(page).toHaveURL(/\/login(?:\?|$)/);
   await page.goto('/dashboard');
   await expect(page).toHaveURL(/\/login(?:\?|$)/);
 });
 
-test('callback without an exchange code fails closed',async({page})=>{
-  await page.goto('/auth/callback');
-  await expect(page).toHaveURL(/\/login\?error=callback$/);
-});
+}
 
-test('signing out invalidates the browser session for protected routes',async({page})=>{
+for (const callback of ['/auth/callback','/auth/callback?code=invalid-code']) {
+  test(`callback fails closed with friendly feedback: ${callback}`,async({page})=>{
+    await page.goto(callback);
+    await expect(page).toHaveURL(/\/login\?error=callback$/);
+    await expect(page.locator('form [role="status"]')).toHaveText(
+      'The sign-in link could not be verified. Please try signing in again.'
+    );
+  });
+}
+
+test('signing out clears session cookies and denies protected routes',async({page,context})=>{
   await signupViaBrowser(page,identity());
   await page.getByRole('button',{name:/sign out/i}).click();
   await expect(page).toHaveURL(/\/login(?:\?|$)/);
-  await page.goto('/dashboard');
-  await expect(page).toHaveURL(/\/login(?:\?|$)/);
+  const remaining=(await context.cookies()).filter(c=>/-auth-token(?:\.\d+)?$/.test(c.name));
+  expect(remaining.length,'Sign-out must remove session cookie chunks').toBe(0);
+  for(const route of ['/dashboard','/onboarding']){
+    await page.goto(route);
+    await expect(page).toHaveURL(/\/login(?:\?|$)/);
+  }
 });
+
+for(const route of ['/dashboard','/onboarding']){
+  test(`tampered browser session cannot enter ${route}`,async({page,context,browser})=>{
+    await signupViaBrowser(page,identity());
+    // Copy the session into a fresh context to avoid the original page's Auth
+    // client repairing it through its in-memory token or background refresh.
+    const cookies=(await context.cookies()).filter(c=>/-auth-token(?:\.\d+)?$/.test(c.name));
+    expect(cookies.length,'A genuine session must exist before tampering').toBeGreaterThan(0);
+    const tampered=await browser.newContext();
+    try{
+      await tampered.addCookies(cookies.map(c=>({...c,value:'invalid-session'})));
+      const visitor=await tampered.newPage();
+      await visitor.goto(route);
+      await expect(visitor).toHaveURL(/\/login(?:\?|$)/);
+      await expect(visitor.getByRole('heading',{name:'Restaurant owner sign-in'})).toBeVisible();
+    }finally{
+      await tampered.close();
+    }
+  });
+}
 
 
 test('a duplicate restaurant slug is rejected across two browser accounts',async({page,browser})=>{
@@ -193,4 +227,120 @@ test('session cookies use root path and SameSite protection',async({page,context
 test('guest demo renders independently of authentication',async({page})=>{
   await page.goto('/');
   await expect(page.getByText(/ServeAI/i).first()).toBeVisible();
+});
+
+
+function jwtClaims(token){
+  return JSON.parse(Buffer.from(token.split('.')[1],'base64url').toString('utf8'));
+}
+
+async function waitForExpiry(token){
+  const {exp}=jwtClaims(token);
+  const remaining=exp*1000-Date.now();
+  // Fail promptly when the developer forgot the test-only short expiry.
+  expect(Number.isFinite(remaining)&&remaining<150_000,
+    'Configure disposable Auth jwt_expiry = 120 before running lifecycle tests').toBe(true);
+  await expect.poll(()=>Date.now()>exp*1000+1500,{
+    timeout:155_000,intervals:[1000]
+  }).toBe(true);
+}
+
+function ageCreationEvents(token){
+  const {sub,email}=jwtClaims(token);
+  if(process.env.E2E_DISPOSABLE_ONLY!=='1' ||
+    process.env.E2E_LOCAL_DB_CONTAINER!=='supabase_db_htl-serveai' ||
+    !/^[0-9a-f-]{36}$/.test(sub) ||
+    !/^serveai-e2e-[0-9a-f-]{36}@example\.test$/.test(email)){
+    throw new Error('Quota helper requires the explicitly enabled disposable test database and identity');
+  }
+  // No shell, no persistent helper/RPC, and no change to quota enforcement.
+  // Require matching disposable Auth identity as well as actor ID.
+  const sql=`update public.audit_logs set created_at=now()-interval '61 seconds'
+    where actor_id='${sub}'::uuid and event_type='tenant.created'
+    and exists(select 1 from auth.users where id='${sub}'::uuid and email='${email}');`;
+  execFileSync('docker',['exec','-i','supabase_db_htl-serveai',
+    'psql','-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1'],{
+    input:sql,stdio:['pipe','pipe','pipe']
+  });
+}
+
+test('fourth restaurant is denied after three successful browser creations',async({page})=>{
+  const token=await signupViaBrowser(page,identity());
+  const prefix=`cap-${randomUUID().slice(0,8)}`;
+  for(let i=1;i<=3;i++){
+    if(i>1)ageCreationEvents(token);
+    await registerRestaurant(page,`Cap Restaurant ${i}`,`${prefix}-${i}`);
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page.getByText(`Cap Restaurant ${i}`,{exact:true})).toBeVisible();
+  }
+  ageCreationEvents(token); // Fourth must hit the total cap, not the cooldown.
+  await registerRestaurant(page,'Cap Restaurant 4',`${prefix}-4`);
+  await expect(page.locator('form [role="alert"]')).toHaveText(
+    'Restaurant creation limit reached. Please try later or contact support.');
+  await page.goto('/dashboard');
+  for(let i=1;i<=3;i++)await expect(page.getByText(`Cap Restaurant ${i}`,{exact:true})).toBeVisible();
+  await expect(page.getByText('Cap Restaurant 4',{exact:true})).toHaveCount(0);
+  const current=await browserSessionToken(page.context());
+  const response=await page.request.get(`${api}/rest/v1/tenants?select=id`,{
+    headers:{apikey:anonKey,Authorization:`Bearer ${current}`}
+  });
+  expect(response.ok()).toBe(true);
+  expect((await response.json()).length,'Exactly three persisted tenants').toBe(3);
+});
+
+test('callback and owner routes preserve identity across two actual JWT expiry windows',async({page,browser})=>{
+  test.setTimeout(360_000);
+  const account=identity();
+  await signupViaBrowser(page,account);
+  const cookies=await page.context().cookies();
+  await page.close(); // Stop the signed-in client's refresh timer.
+  const context=await browser.newContext({javaScriptEnabled:false});
+  try{
+    await context.addCookies(cookies);
+    const visitor=await context.newPage();
+    for(const route of ['/onboarding','/dashboard']){
+      const before=await browserSessionToken(context);
+      await waitForExpiry(before);
+      if(route==='/onboarding'){
+        // Exercise middleware refresh on a redirecting route. Without a code,
+        // callback fails closed, but must still persist refreshed session cookies.
+        await visitor.goto('/auth/callback');
+        await expect(visitor).toHaveURL(/\/login\?error=callback$/);
+        const callbackToken=await browserSessionToken(context);
+        expect(callbackToken!==before,'Callback redirect must persist rotated auth cookies').toBe(true);
+        expect(jwtClaims(callbackToken).exp>jwtClaims(before).exp,
+          'Callback must issue a later-expiring JWT').toBe(true);
+        expect(jwtClaims(callbackToken).sub===jwtClaims(before).sub,
+          'Callback refresh must preserve identity').toBe(true);
+      }
+      await visitor.goto(route);
+      await expect(visitor).toHaveURL(new RegExp(`${route}$`));
+      const after=await browserSessionToken(context);
+      expect(after!==before,'Server navigation must rotate the expired session cookie').toBe(true);
+      expect(jwtClaims(after).exp>jwtClaims(before).exp,'Replacement JWT must have a later expiry').toBe(true);
+      expect(jwtClaims(after).sub===jwtClaims(before).sub,'Identity must remain unchanged').toBe(true);
+    }
+    await expect(visitor.getByText(account.email)).toBeVisible();
+  }finally{await context.close();}
+});
+
+test('revoked refresh credentials cannot recover an expired browser session',async({page,browser,request})=>{
+  test.setTimeout(200_000);
+  const token=await signupViaBrowser(page,identity());
+  const cookies=await page.context().cookies();
+  await page.close();
+  const logout=await request.post(`${api}/auth/v1/logout?scope=global`,{
+    headers:{apikey:anonKey,Authorization:`Bearer ${token}`}
+  });
+  expect(logout.ok(),'Local Auth must revoke the session').toBe(true);
+  const context=await browser.newContext({javaScriptEnabled:false});
+  try{
+    await context.addCookies(cookies);
+    await waitForExpiry(token);
+    const visitor=await context.newPage();
+    for(const route of ['/dashboard','/onboarding']){
+      await visitor.goto(route);
+      await expect(visitor).toHaveURL(/\/login(?:\?|$)/);
+    }
+  }finally{await context.close();}
 });
