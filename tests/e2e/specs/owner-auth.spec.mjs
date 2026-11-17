@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {randomUUID} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 
 const api=process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -226,4 +227,108 @@ test('session cookies use root path and SameSite protection',async({page,context
 test('guest demo renders independently of authentication',async({page})=>{
   await page.goto('/');
   await expect(page.getByText(/ServeAI/i).first()).toBeVisible();
+});
+
+
+function jwtClaims(token){
+  return JSON.parse(Buffer.from(token.split('.')[1],'base64url').toString('utf8'));
+}
+
+async function waitForExpiry(token){
+  const {exp}=jwtClaims(token);
+  const remaining=exp*1000-Date.now();
+  // Fail promptly when the developer forgot the test-only short expiry.
+  expect(Number.isFinite(remaining)&&remaining<150_000,
+    'Configure disposable Auth jwt_expiry = 120 before running lifecycle tests').toBe(true);
+  await expect.poll(()=>Date.now()>exp*1000+1500,{
+    timeout:155_000,intervals:[1000]
+  }).toBe(true);
+}
+
+function ageCreationEvents(token){
+  const {sub,email}=jwtClaims(token);
+  if(process.env.E2E_DISPOSABLE_ONLY!=='1' ||
+    process.env.E2E_LOCAL_DB_CONTAINER!=='supabase_db_htl-serveai' ||
+    !/^[0-9a-f-]{36}$/.test(sub) ||
+    !/^serveai-e2e-[0-9a-f-]{36}@example\.test$/.test(email)){
+    throw new Error('Quota helper requires the explicitly enabled disposable test database and identity');
+  }
+  // No shell, no persistent helper/RPC, and no change to quota enforcement.
+  // Require matching disposable Auth identity as well as actor ID.
+  const sql=`update public.audit_logs set created_at=now()-interval '61 seconds'
+    where actor_id='${sub}'::uuid and event_type='tenant.created'
+    and exists(select 1 from auth.users where id='${sub}'::uuid and email='${email}');`;
+  execFileSync('docker',['exec','-i','supabase_db_htl-serveai',
+    'psql','-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1'],{
+    input:sql,stdio:['pipe','pipe','pipe']
+  });
+}
+
+test('fourth restaurant is denied after three successful browser creations',async({page})=>{
+  const token=await signupViaBrowser(page,identity());
+  const prefix=`cap-${randomUUID().slice(0,8)}`;
+  for(let i=1;i<=3;i++){
+    if(i>1)ageCreationEvents(token);
+    await registerRestaurant(page,`Cap Restaurant ${i}`,`${prefix}-${i}`);
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page.getByText(`Cap Restaurant ${i}`,{exact:true})).toBeVisible();
+  }
+  ageCreationEvents(token); // Fourth must hit the total cap, not the cooldown.
+  await registerRestaurant(page,'Cap Restaurant 4',`${prefix}-4`);
+  await expect(page.locator('form [role="alert"]')).toHaveText(
+    'Restaurant creation limit reached. Please try later or contact support.');
+  await page.goto('/dashboard');
+  for(let i=1;i<=3;i++)await expect(page.getByText(`Cap Restaurant ${i}`,{exact:true})).toBeVisible();
+  await expect(page.getByText('Cap Restaurant 4',{exact:true})).toHaveCount(0);
+  const current=await browserSessionToken(page.context());
+  const response=await page.request.get(`${api}/rest/v1/tenants?select=id`,{
+    headers:{apikey:anonKey,Authorization:`Bearer ${current}`}
+  });
+  expect(response.ok()).toBe(true);
+  expect((await response.json()).length,'Exactly three persisted tenants').toBe(3);
+});
+
+test('server refresh preserves identity across two actual JWT expiry windows',async({page,browser})=>{
+  test.setTimeout(360_000);
+  const account=identity();
+  await signupViaBrowser(page,account);
+  const cookies=await page.context().cookies();
+  await page.close(); // Stop the signed-in client's refresh timer.
+  const context=await browser.newContext({javaScriptEnabled:false});
+  try{
+    await context.addCookies(cookies);
+    const visitor=await context.newPage();
+    for(const route of ['/onboarding','/dashboard']){
+      const before=await browserSessionToken(context);
+      await waitForExpiry(before);
+      await visitor.goto(route);
+      await expect(visitor).toHaveURL(new RegExp(`${route}$`));
+      const after=await browserSessionToken(context);
+      expect(after!==before,'Server navigation must rotate the expired session cookie').toBe(true);
+      expect(jwtClaims(after).exp>jwtClaims(before).exp,'Replacement JWT must have a later expiry').toBe(true);
+      expect(jwtClaims(after).sub===jwtClaims(before).sub,'Identity must remain unchanged').toBe(true);
+    }
+    await expect(visitor.getByText(account.email)).toBeVisible();
+  }finally{await context.close();}
+});
+
+test('revoked refresh credentials cannot recover an expired browser session',async({page,browser,request})=>{
+  test.setTimeout(200_000);
+  const token=await signupViaBrowser(page,identity());
+  const cookies=await page.context().cookies();
+  await page.close();
+  const logout=await request.post(`${api}/auth/v1/logout?scope=global`,{
+    headers:{apikey:anonKey,Authorization:`Bearer ${token}`}
+  });
+  expect(logout.ok(),'Local Auth must revoke the session').toBe(true);
+  const context=await browser.newContext({javaScriptEnabled:false});
+  try{
+    await context.addCookies(cookies);
+    await waitForExpiry(token);
+    const visitor=await context.newPage();
+    for(const route of ['/dashboard','/onboarding']){
+      await visitor.goto(route);
+      await expect(visitor).toHaveURL(/\/login(?:\?|$)/);
+    }
+  }finally{await context.close();}
 });
