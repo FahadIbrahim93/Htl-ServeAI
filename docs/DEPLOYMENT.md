@@ -72,7 +72,7 @@ Live since 16 November 2026. There is no production database yet, so the Vercel 
 | Staging URL | https://htl-serveai-hopetheorybd-2156s-projects.vercel.app |
 | Vercel project | `htl-serveai` (`prj_H5QmuPulMdCcTAu8K7Xx7aohL4i6`), Root Directory `apps/web`, Node 22 |
 | Supabase project | `htl-serveai-staging` (`ipwdraxmmrlosbqgipda`) |
-| Access | Vercel Authentication on; sign in to the team's Vercel account to view |
+| Access | Vercel Authentication on for this URL; sign in to the team's Vercel account to view. **The project alias `htl-serveai.vercel.app` is public** (checked 18 Nov 2026) and uses the same staging database; see [#42](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/42) |
 
 **Auth URL configuration for staging** (Supabase dashboard → Authentication → URL Configuration):
 
