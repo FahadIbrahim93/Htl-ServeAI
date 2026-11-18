@@ -1,6 +1,6 @@
 # Implementation Status
 
-**Reviewed 17 November 2026.** This page describes what is merged into `main`. Open pull requests are listed separately and are not counted as delivered.
+**Reviewed 18 November 2026 (`main` at `92f8b60`).** This page describes what is merged into `main`. Open pull requests (#26, #41, #30) are listed in [STATUS.md](STATUS.md) and are not counted as delivered.
 
 | Capability | Current verified state |
 |---|---|
@@ -19,7 +19,7 @@
 | Server API for orders | Not implemented. Guest orders are not persisted |
 | Kitchen display, realtime updates, staff handoff | Simulated or not implemented |
 | AI waiter | Simulated static responses only |
-| Hosted Supabase staging and release migrations | Protected staging is documented in #29; four canonical migrations applied there. Production is not configured (#5) |
+| Hosted Supabase staging and release migrations | Staging is documented in #29; four canonical migrations applied there. The staging URL is behind Vercel login, but the project alias `htl-serveai.vercel.app` is public and uses the staging database (#42). Production is not configured (#5) |
 | Production deployment | Not deployed |
 | Licence | Public, all rights reserved; merged in PR #18 (#6) |
 

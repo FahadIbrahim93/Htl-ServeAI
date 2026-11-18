@@ -2,7 +2,17 @@
 
 Target schedule for a focused small team. Estimates are not commitments.
 
-**Where we are (17 November 2026):** Phase 1 is in progress. Protected staging is available for internal testing; production is not configured and later product phases have not started.
+**Where we are (18 November 2026):** Phase 1 is in progress. Protected staging is available for internal testing; production is not configured and later product phases have not started.
+
+## Next up (priority order)
+
+Issues are the working list. Take the top `agent-ready` item unless Fahad says otherwise. Items marked **suggestion** are ideas, not commitments.
+
+1. [#43](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/43) Bring Dependabot #30 up to date and green; merging it clears 4 postcss alerts (2 high). Fahad merges.
+2. [#4](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/4) Staff invitations: update #26, fold in #41, fix the existence leak, add the manager-revokes-manager test, then delivery, UI and browser tests.
+3. [#42](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/42) Decide what to do about the public production alias that serves the staging database (Fahad).
+4. [#5](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/5) Release gates: Auth redirect URLs (Fahad), backup-restore rehearsal, captcha and SMTP plan, monitoring.
+5. [#44](https://github.com/FahadIbrahim93/Htl-ServeAI/issues/44) **Suggestion:** menu catalog, modifiers and tables, database layer first. Not before #4 merges.
 
 ## Phase 1 — Foundation (weeks 1–3) · in progress
 - [x] Import the prepared Next.js/Supabase source (#1, PR #8).
