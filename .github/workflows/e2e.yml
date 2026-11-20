@@ -32,7 +32,7 @@ jobs:
           cd tests/e2e
           npx playwright install --with-deps chromium
       - name: Set up local Supabase CLI
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v3
         with:
           version: 3.2.0
       - name: Configure disposable localhost Supabase
