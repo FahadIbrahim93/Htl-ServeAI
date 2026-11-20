@@ -43,7 +43,7 @@ jobs:
           fi
       - name: Set up Supabase CLI
         if: steps.changes.outputs.db == 'true'
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v3
         with:
           version: latest
       - name: Configure disposable local signup for CI
