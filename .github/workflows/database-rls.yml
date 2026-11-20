@@ -31,7 +31,7 @@ jobs:
       PGPASSWORD: postgres
       PGDATABASE: serveai_test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Ensure PostgreSQL client is available
         run: |
           if ! command -v psql >/dev/null; then
