@@ -96,7 +96,7 @@ jobs:
         run: npm run test:e2e --prefix tests/e2e
       - name: Upload browser diagnostics on failure only
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: serveai-e2e-failure
           path: |
